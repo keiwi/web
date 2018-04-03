@@ -17,7 +17,8 @@ export default {
     getCommand () {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.GET_COMMANDS_URL).then(response => {
-                resolve(response.body)
+                if (response.body == null) resolve([])
+                else resolve(response.body)
             }, response => {
                 reject(response.statusText)
             })

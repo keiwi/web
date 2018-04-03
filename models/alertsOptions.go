@@ -1,33 +1,17 @@
 package models
 
 import (
-	"github.com/jinzhu/gorm"
-
-	// import mysql driver
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/nats-io/go-nats"
 )
-
-// AlertsOptions struct
-type AlertsOptions struct {
-	gorm.Model `json:"-"`
-	ClientID   int    `json:"client_id"`
-	CommandID  int    `json:"command_id"`
-	Alert      string `gorm:"not null" json:"alert"`
-	Value      string `gorm:"not null" json:"value"`
-	Count      int    `json:"count"`
-	Delay      int    `json:"delay"`
-	Service    string `gorm:"not null" json:"service"`
-}
 
 // AlertsOptionsManager struct
 type AlertsOptionsManager struct {
-	db *DB
+	conn *nats.Conn
 }
 
 // NewAlertsOptionsManager - Creates a new *AlertsOptionsManager that can be used for managing alertsOptions.
-func NewAlertsOptionsManager(db *DB) (*AlertsOptionsManager, error) {
-	db.AutoMigrate(&AlertsOptions{})
+func NewAlertsOptionsManager(conn *nats.Conn) (*AlertsOptionsManager, error) {
 	manager := AlertsOptionsManager{}
-	manager.db = db
+	manager.conn = conn
 	return &manager, nil
 }

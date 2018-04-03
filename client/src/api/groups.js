@@ -28,8 +28,9 @@ export default {
     getGroups () {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.GET_GROUPS_URL).then(response => {
-                if (!response.body.success === false) reject(response.body.message)
-                resolve(response.body)
+                if (response.body == null) resolve([])
+                else if (!response.body.success === false) reject(response.body.message)
+                else resolve(response.body)
             }, response => {
                 reject(response.statusText)
             })

@@ -1,7 +1,7 @@
 <template>
     <div class="animated fadeIn">
         <b-card>
-            <h4 class="card-title mb-0">Traffic</h4>
+            <h4 class="card-title mb-0">Settings</h4>
             <div slot="footer">
                 <div class="row">
                     <settings-commands></settings-commands>

@@ -13,7 +13,7 @@ export default {
         return new Promise((resolve, reject) => {
             api.groupExists(name)
                 .then((response) => {
-                    if (!response) commit('createGroup', name)
+                    if (!response) commit('createGroup', {name, commands: []})
                     resolve(response)
                 }, (response) => {
                     reject(response)
@@ -48,7 +48,7 @@ export default {
             api.getGroups()
                 .then((response) => {
                     for (let c of response) {
-                        commit('addGroupCommand', c)
+                        commit('createGroup', c)
                     }
                     resolve()
                 }, (response) => {

@@ -7,7 +7,8 @@ import (
 	"net/http"
 
 	"github.com/keiwi/utils"
-	"github.com/keiwi/web/models"
+	"github.com/keiwi/utils/models"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // RenameGroupOptions is the values that
@@ -40,18 +41,18 @@ func (api *API) RenameGroup(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	if ok := api.groups.ExistsName(jsondata.NewName); !ok {
+	if ok := api.handler.Groups.HasGroup(jsondata.NewName); !ok {
 		outputJSON(w, false, "There is already an existing group with this name", nil)
 		return
 	}
 
-	count, err := api.groups.UpdateName(jsondata.NewName, jsondata.OldName)
+	err := api.handler.Groups.UpdateName(jsondata.NewName, jsondata.OldName)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "An internal error occured", nil)
 	}
 
-	outputJSON(w, true, fmt.Sprintf("Renamed %d group instances in the database", count), count)
+	outputJSON(w, true, fmt.Sprintf("Renamed %d group instances in the database", -1), -1)
 }
 
 // AddGroupOptions is the values that
@@ -59,7 +60,7 @@ func (api *API) RenameGroup(w http.ResponseWriter, res *http.Request) {
 // when adding a command to a group
 type AddGroupOptions struct {
 	GroupName string `json:"group_name"`
-	CommandID int    `json:"command_id"`
+	CommandID string `json:"command_id"`
 	Delay     int    `json:"delay"`
 	StopError bool   `json:"stop_error"`
 }
@@ -67,7 +68,7 @@ type AddGroupOptions struct {
 // CreateGroup will add a new command to a specific group
 func (api *API) CreateGroup(w http.ResponseWriter, res *http.Request) {
 	decoder := json.NewDecoder(res.Body)
-	jsondata := AddGroupOptions{CommandID: 1}
+	jsondata := AddGroupOptions{}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
@@ -76,7 +77,7 @@ func (api *API) CreateGroup(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	if jsondata.CommandID == -1 {
+	if jsondata.CommandID == "" {
 		outputJSON(w, false, "Please provide a command id", nil)
 		return
 	}
@@ -85,17 +86,45 @@ func (api *API) CreateGroup(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	group := &models.Group{
-		CommandID: jsondata.CommandID,
-		GroupName: jsondata.GroupName,
-		NextCheck: jsondata.Delay,
-		StopError: jsondata.StopError,
+	group, err := api.handler.Groups.FindName(jsondata.GroupName)
+	if err != nil && err.Error() != "could not find any groups" {
+		utils.Log.WithError(err).Error("error when retrieving existing group")
+		outputJSON(w, false, "internal error", nil)
+		return
 	}
 
-	err := api.groups.Create(group)
-	if err != nil {
-		utils.Log.Error(err.Error())
-		outputJSON(w, false, "An internal error occured", nil)
+	if group == nil {
+		group = &models.Group{
+			Name: jsondata.GroupName,
+			Commands: []models.GroupCommand{
+				{
+					ID:        bson.NewObjectId(),
+					CommandID: bson.ObjectIdHex(jsondata.CommandID),
+				},
+			},
+		}
+
+		err = api.handler.Groups.Create(group)
+		if err != nil {
+			utils.Log.Error(err.Error())
+			outputJSON(w, false, "An internal error occured", nil)
+			return
+		}
+	} else {
+		group.Commands = append(group.Commands, models.GroupCommand{
+			ID:        bson.NewObjectId(),
+			CommandID: bson.ObjectIdHex(jsondata.CommandID),
+		})
+
+		filter := utils.Filter{"name": group.Name}
+		updates := utils.Updates{"$set": map[string]interface{}{"commands": group.Commands}}
+
+		err = api.handler.Groups.Save(filter, updates)
+		if err != nil {
+			utils.Log.Error(err.Error())
+			outputJSON(w, false, "An internal error occured", nil)
+			return
+		}
 	}
 
 	outputJSON(w, true, "Successfully created added the command to the group", group)
@@ -113,26 +142,26 @@ func (api *API) EditGroup(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	group, err := api.groups.Find(jsondata.ID)
+	filter := utils.Filter{"commands.id": bson.ObjectIdHex(jsondata.ID)}
+
+	group, err := api.handler.Groups.FindFilter(filter)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "Can't find a command with this ID", nil)
 		return
 	}
 
+	updates := map[string]interface{}{}
+
 	switch jsondata.Option {
 	case "command_id", "CommandID":
-		id, e := convertToInt(jsondata.Value)
-		if e != nil {
-			outputJSON(w, false, "ID is not a number", nil)
-			log.Print(e)
-			return
+		for i, v := range group.Commands {
+			if v.ID == bson.ObjectIdHex(jsondata.ID) {
+				group.Commands[i].CommandID = bson.ObjectIdHex(jsondata.Value.(string))
+				updates["commands.$.command_id"] = bson.ObjectIdHex(jsondata.Value.(string))
+				break
+			}
 		}
-		if id > 2147483647 || id < 0 {
-			outputJSON(w, false, "Please send a valid number", nil)
-			return
-		}
-		group.CommandID = int(id)
 	case "next_check", "NextCheck":
 		next, e := convertToInt(jsondata.Value)
 		if e != nil {
@@ -144,20 +173,32 @@ func (api *API) EditGroup(w http.ResponseWriter, res *http.Request) {
 			outputJSON(w, false, "Please send a valid number", nil)
 			return
 		}
-		group.NextCheck = int(next)
+		for i, v := range group.Commands {
+			if v.ID == bson.ObjectIdHex(jsondata.ID) {
+				group.Commands[i].NextCheck = int(next)
+				updates["commands.$.next_check"] = int(next)
+				break
+			}
+		}
 	case "stop_error", "StopError":
 		stop, ok := jsondata.Value.(bool)
 		if !ok {
 			outputJSON(w, false, "Value is not a boolean", nil)
 			return
 		}
-		group.StopError = stop
+		for i, v := range group.Commands {
+			if v.ID == bson.ObjectIdHex(jsondata.ID) {
+				group.Commands[i].StopError = stop
+				updates["commands.$.stop_error"] = stop
+				break
+			}
+		}
 	default:
 		outputJSON(w, false, "Please provide a correct column", nil)
 		return
 	}
 
-	if err = api.groups.Save(group); err != nil {
+	if err = api.handler.Groups.Save(filter, utils.Updates{"$set": updates}); err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "An internal error occured when saving the group", nil)
 		return
@@ -177,7 +218,7 @@ func (api *API) DeleteGroupID(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	err := api.groups.DeleteWithID(jsondata.ID)
+	err := api.handler.Groups.DeleteWithID(jsondata.ID)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "An internal error occured when deleting the command", nil)
@@ -210,7 +251,7 @@ func (api *API) DeleteGroupName(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	err := api.groups.DeleteWithName(jsondata.Name)
+	err := api.handler.Groups.DeleteWithName(jsondata.Name)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "An internal error occured when deleting the command", nil)
@@ -221,7 +262,7 @@ func (api *API) DeleteGroupName(w http.ResponseWriter, res *http.Request) {
 
 // GetGroups will return a JSON array of all groups in the database
 func (api *API) GetGroups(w http.ResponseWriter, res *http.Request) {
-	groups, err := api.groups.FindAll()
+	groups, err := api.handler.Groups.FindAll()
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
@@ -259,7 +300,7 @@ func (api *API) HasGroup(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	js, _ := json.Marshal(api.groups.HasGroup(jsondata.Name))
+	js, _ := json.Marshal(api.handler.Groups.HasGroup(jsondata.Name))
 	if _, err := w.Write(js); err != nil {
 		utils.Log.Fatal(err.Error())
 	}

@@ -2,12 +2,17 @@ var path = require('path')
 var utils = require('./utils')
 var config = require('../config')
 var vueLoaderConfig = require('./vue-loader.conf')
+var webpack = require('webpack')
 
 function resolve (dir) {
     return path.join(__dirname, '..', dir)
 }
 
 module.exports = {
+    mode: process.env.NODE_ENV,
+    plugins: [
+        new webpack.IgnorePlugin(/vertx/)
+    ],
     entry: {
         app: './src/main.js'
     },
@@ -29,12 +34,17 @@ module.exports = {
         rules: [
             {
                 test: /\.(js|vue)$/,
-                loader: 'eslint-loader',
+                use: [
+                    { loader: 'ify-loader' },
+                    {
+                        loader: 'eslint-loader',
+                        options: {
+                            fomatter: require('eslint-friendly-formatter')
+                        }
+                    }
+                ],
                 enforce: 'pre',
                 include: [resolve('src'), resolve('test')],
-                options: {
-                    formatter: require('eslint-friendly-formatter')
-                }
             },
             {
                 test: /\.vue$/,
@@ -47,12 +57,16 @@ module.exports = {
                 include: [resolve('src'), resolve('test')]
             },
             {
+                test: /\.js$/,
+                loader: 'ify-loader'
+            },
+            {
                 test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
                 use: {
                     loader: 'file-loader',
                     options: {
                         name: '[name].[hash:7].[ext]',
-                        publicPath: '../../',
+                        publicPath: '',
                         outputPath: utils.assetsPath('img/')
                     }
                 }
@@ -63,7 +77,7 @@ module.exports = {
                     loader: 'file-loader',
                     options: {
                         name: '[name].[hash:7].[ext]',
-                        publicPath: '../../',
+                        publicPath: '',
                         outputPath: utils.assetsPath('fonts/')
                     }
                 }

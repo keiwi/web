@@ -54,7 +54,8 @@ let SimpleGraph = function (elem, options = {}) {
         chart: elem,
         width: elem.offsetWidth || 1000,
         height: elem.offsetHeight || 400,
-        margin: {top: 50, right: 50, bottom: 50, left: 50},
+        margin: {top: 20, right: 20, bottom: 110, left: 40},
+        zoomMargin: {top: 430, right: 20, bottom: 30, left: 40},
         yPrefix: null,
         onDataHover: null,
         scaleX: 0.95,
@@ -62,13 +63,16 @@ let SimpleGraph = function (elem, options = {}) {
         dotHoverScale: 1.2
     }
 
+    this._options.width = this._options.width - this._options.margin.left - this._options.margin.right
+    this._options.height = this._options.height - this._options.margin.top - this._options.margin.bottom
+    this._options.zoomHeight = this._options.height - this._options.zoomMargin.top - this._options.zoomMargin.bottom
+
     // Apply provided options
     this.options(options)
 
     let scale = this._options.scaleX + ', ' + this._options.scaleY
     let transform = this._options.margin.left + ', ' + this._options.margin.top
 
-    // 1. Add the SVG to the page and employ #2
     this.svg = d3.select(this._options.chart)
         .append('svg')
         .attr('width', '100%')
@@ -78,6 +82,12 @@ let SimpleGraph = function (elem, options = {}) {
         .append('g')
         .attr('transform', 'scale(' + scale + ') translate(' + transform + ')')
 
+    this.svg.append('defs').append('clipPath')
+        .attr('id', 'clip')
+        .append('rect')
+        .attr('width', this._options.width)
+        .attr('height', this._options.height)
+
     // Define the div for the tooltip
     this.tooltip = d3.select('body').append('div')
         .attr('class', 'tooltip')
@@ -86,7 +96,6 @@ let SimpleGraph = function (elem, options = {}) {
     this.tooltip.append('i')
         .attr('class', 'fa fa-times close-tooltip pull-right')
         .on('mouseup', function () {
-            console.log(self.tooltip)
             self.tooltip.attr('show', false)
                 .transition()
                 .duration(500)
@@ -95,6 +104,47 @@ let SimpleGraph = function (elem, options = {}) {
 
     this.tooltip.append('span') // tooltip body
         .attr('class', 'tooltip-body')
+
+    this.parseDate = d3.timeParse('%b %Y')
+
+    this.x = d3.scaleTime().range([0, this._options.width])
+    this.x2 = d3.scaleTime().range([0, this._options.width])
+    this.y = d3.scaleLinear().range([this._options.height, 0])
+    this.y2 = d3.scaleLinear().range([this._options.zoomHeight, 0])
+
+    this.xAxis = d3.axisBottom(this.x)
+    this.xAxis2 = d3.axisBottom(this.x2)
+    this.yAxis = d3.axisLeft(this.y)
+
+    this.brush = d3.brushX()
+        .extent([[0, 0], [this._options.width, this._options.zoomHeight]])
+        .on('brush end', this.brushed)
+
+    this.zoom = d3.zoom()
+        .scaleExtent([1, Infinity])
+        .translateExtent([[0, 0], [this._options.width, this._options.height]])
+        .extent([[0, 0], [this._options.width, this._options.height]])
+        .on('zoom', this.zoomed)
+
+    this.area = d3.area()
+        .curve(d3.curveMonotoneX)
+        .x(function (d) { return self.x(d.date) })
+        .y0(this._options.height)
+        .y1(function (d) { return self.y(d.price) })
+
+    this.area2 = d3.area()
+        .curve(d3.curveMonotoneX)
+        .x(function (d) { return self.x2(d.date) })
+        .y0(this._options.zoomHeight)
+        .y1(function (d) { return self.y2(d.price) })
+
+    this.focus = this.svg.append('g')
+        .attr('class', 'focus')
+        .attr('transform', 'translate(' + this._options.margin.left + ',' + this._options.margin.top + ')')
+
+    this.context = this.svg.append('g')
+        .attr('class', 'context')
+        .attr('transform', 'translate(' + this._options.zoomMargin.left + ',' + this._options.zoomMargin.top + ')')
 
     this.redraw()
 }
@@ -122,6 +172,26 @@ SimpleGraph.prototype.update = function (data, opts = null) {
     this.data = data.dataSets || []
     this.dataOptions = data.options
     this.redraw()
+}
+
+SimpleGraph.prototype.brushed = function () {
+    if (d3.event.sourceEvent && d3.event.sourceEvent.type === 'zoom') return // ignore brush-by-zoom
+    var s = d3.event.selection || this.x2.range()
+    this.x.domain(s.map(this.x2.invert, this.x2))
+    focus.select('.area').attr('d', this.area)
+    focus.select('.axis--x').call(this.xAxis)
+    this.svg.select('.zoom').call(this.zoom.transform, d3.zoomIdentity
+        .scale(this.width / (s[1] - s[0]))
+        .translate(-s[0], 0))
+}
+
+SimpleGraph.prototype.zoomed = function () {
+    if (d3.event.sourceEvent && d3.event.sourceEvent.type === 'brush') return // ignore zoom-by-brush
+    var t = d3.event.transform
+    this.x.domain(t.rescaleX(this.x2).domain())
+    focus.select('.area').attr('d', this.area)
+    focus.select('.axis--x').call(this.xAxis)
+    this.context.select('.brush').call(this.brush.move, this.x.range().map(t.invertX, t))
 }
 
 /**
@@ -154,15 +224,17 @@ SimpleGraph.prototype.redraw = function () {
     yRange[0] = yRange[0] / 1.2
     yRange[1] = yRange[1] * 1.2
 
+    let xDomain = d3.scaleLinear().domain(xRange)
+    let yDomain = d3.scaleLinear().domain(yRange)
+
+    this.x2.domain(xDomain)
+    this.y2.domain(yDomain)
+
     // 5. X scale will use the index of our data
-    let xScale = d3.scaleLinear()
-        .domain(xRange) // input
-        .range([0, this._options.width]) // output
+    let xScale = xDomain.range([0, this._options.width]) // output
 
     // 6. Y scale will use the randomly generate number
-    let yScale = d3.scaleLinear()
-        .domain(yRange) // input
-        .range([this._options.height, 0]) // output
+    let yScale = yDomain.range([this._options.height, 0]) // output
 
     for (let i = 0; i < this.data.length; i++) {
         // 7. d3's line generator

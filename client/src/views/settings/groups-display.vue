@@ -23,15 +23,16 @@
         },
         computed: {
             models () {
+                console.log(this.row)
                 return {
-                    Command: this.row.Command,
-                    Description: this.row.Description,
-                    Namn: this.row.Namn,
-                    Format: this.row.Format
+                    Command: this.row.command,
+                    Description: this.row.description,
+                    Name: this.row.name,
+                    Format: this.row.format
                 }
             },
             values () {
-                return this.row.Commands
+                return this.row.commands
             }
         },
         mounted () {
@@ -49,11 +50,11 @@
                 HeaderSettings: false,
                 'tbl-class': ['table-bordered'],
                 columns: [
-                    { title: 'ID', field: 'ID', thComp: 'FilterTh', tdStyle: { fontStyle: 'italic' }, sortable: true },
-                    { title: 'Command ID', field: 'CommandID', sortable: true },
-                    { title: 'Command', field: 'Command', sortable: true },
-                    { title: 'Next Check', field: 'NextCheck', tdComp: 'Timepicker', sortable: true, colStyle: {width: '20%'} },
-                    { title: 'Stop Error', field: 'StopError', tdComp: 'ToggleTd', sortable: true, colStyle: {width: '15%'} },
+                    { title: 'ID', field: 'id', thComp: 'FilterTh', tdStyle: { fontStyle: 'italic' }, sortable: true },
+                    { title: 'Command ID', field: 'command_id', sortable: true },
+                    { title: 'Command', field: 'command', sortable: true },
+                    { title: 'Next Check', field: 'next_check', tdComp: 'Timepicker', sortable: true, colStyle: {width: '20%'} },
+                    { title: 'Stop Error', field: 'stop_error', tdComp: 'ToggleTd', sortable: true, colStyle: {width: '15%'} },
                     { title: 'Action', tdComp: 'GroupsAction' }
                 ],
                 query: { 'limit': 10, 'offset': 0, 'sort': '', 'order': '' },

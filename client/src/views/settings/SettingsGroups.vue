@@ -1,5 +1,6 @@
 <template>
     <div class='settings-commands'>
+        <h6>Groups</h6>
         <div class='btn-group btn-group-md' style='margin-bottom:10px'>
             <button type='button' class='btn btn-warning' style='border-radius:5px 0 0 5px' @click='removeGroups'>
                 <i class='fa fa-trash'></i> Delete
@@ -38,15 +39,18 @@
             }, 1000)
         },
         computed: {
+            ...mapGetters([
+                'getCommand'
+            ]),
             values () {
                 let values = this.$store.state.groups
                 values = CloneDeep(values)
                 for (let i in values) {
-                    values[i].Amount = values[i].Commands.length
-                    for (let j in values[i].Commands) {
-                        let cmd = this.$store.getters.getCommand(values[i].Commands[j].CommandID)
+                    values[i].amount = values[i].commands.length
+                    for (let j in values[i].commands) {
+                        let cmd = this.getCommand(values[i].commands[j].command_id)
                         if (typeof cmd === 'undefined') continue
-                        values[i].Commands[j].Command = cmd.Command
+                        values[i].commands[j].command = cmd.command
                     }
                 }
                 return values
@@ -60,8 +64,8 @@
                 HeaderSettings: false,
                 'tbl-class': ['table-bordered'],
                 columns: [
-                    { title: 'Name', field: 'Name', thComp: 'FilterTh', tdStyle: { fontStyle: 'italic' }, sortable: true },
-                    { title: 'Commands', field: 'Amount', sortable: true },
+                    { title: 'Name', field: 'name', thComp: 'FilterTh', tdStyle: { fontStyle: 'italic' }, sortable: true },
+                    { title: 'Commands', field: 'amount', sortable: true },
                     { title: 'Actions', tdComp: 'GroupsTd' }
                 ],
                 query: { 'limit': 10, 'offset': 0, 'sort': '', 'order': '' },
@@ -89,9 +93,6 @@
                 'initGroups',
                 'deleteGroup'
             ]),
-            ...mapGetters([
-                'getCommand'
-            ]),
             handleQueryChange () {
                 let data = filter(this.values, this.query)
                 this.data = data.rows
@@ -104,7 +105,7 @@
                 }
 
                 for (let row of this.selection) {
-                    this.deleteGroup({name: row.Name}).then((response) => {
+                    this.deleteGroup({name: row.name}).then((response) => {
                         if (!response.success) VueNotifications.error({message: response.message})
                     }, (response) => VueNotifications.error({message: response}))
                 }

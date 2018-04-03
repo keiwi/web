@@ -5,12 +5,12 @@ export default {
     hideCommandModal (state) {
         state.createCommandModal = false
     },
-    createCommand (state, {ID, Command, Namn, Description, Format}) {
-        state.commands.push({ID, Command, Namn, Description, Format})
+    createCommand (state, {id, command, name, description, format}) {
+        state.commands.push({id, command, name, description, format})
     },
     editCommand (state, {id, option, value}) {
         for (var i in state.commands) {
-            if (state.commands[i].ID === id) {
+            if (state.commands[i].id === id) {
                 state.commands[i][option] = value
                 return
             }
@@ -18,7 +18,7 @@ export default {
     },
     deleteCommand (state, ID) {
         for (var i in state.commands) {
-            if (state.commands[i].ID === ID) {
+            if (state.commands[i].id === ID) {
                 state.commands.splice(i, 1)
                 return
             }

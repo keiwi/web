@@ -9,8 +9,15 @@
                 <b-form-checkbox id="checkbox2"
                     v-model="mysql">
                     Save to mysql
-                </b-form-checkbox><br>
-                <b-form-input 
+                </b-form-checkbox>
+                <br>
+                <b-form-select
+                  v-if="!manual"
+                  v-model="commandSelected"
+                  :options="commandList"
+                  style="display:block">
+                </b-form-select>
+                <b-form-input
                     v-if="manual"
                     v-model="command"
                     type="text"
@@ -20,16 +27,9 @@
                 <b-button
                     type="submit"
                     variant="primary"
-                    @ok="sendCheck">
+                    @click.prevent="sendCheck">
                     Send manual check
                 </b-button>
-                <br>
-                <b-form-select
-                    v-if="!manual"
-                    v-model="commandSelected"
-                    :options="commandList"
-                    class="mb-3">
-                </b-form-select>
             </b-form>
             <pre
                 v-if="result"
@@ -53,15 +53,15 @@
         },
         methods: {
             sendCheck () {
-
+                console.log(this)
             }
         },
         computed: {
             commandList () {
                 let cmds = this.$store.state.commands.map((v) => {
                     return {
-                        value: v.ID,
-                        text: v.Namn + ' (' + v.Command + ')'
+                        value: v.id,
+                        text: v.name + ' (' + v.command + ')'
                     }
                 })
                 this.commandSelected = cmds[0].value

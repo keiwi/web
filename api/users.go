@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/keiwi/utils"
+	"github.com/keiwi/utils/models"
 	"github.com/keiwi/web/auth"
-	"github.com/keiwi/web/models"
 )
 
 // UserJSON - json data expected for login/signup
@@ -27,17 +27,22 @@ func (api *API) UserSignup(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	if api.users.HasUser(jsondata.Username) {
+	if api.handler.Users.HasUser(jsondata.Username) {
 		http.Error(w, "Username already exists", http.StatusBadRequest)
 		return
 	}
 
-	if api.users.HasUserByEmail(jsondata.Email) {
+	if api.handler.Users.HasUserByEmail(jsondata.Email) {
 		http.Error(w, "A user with this email already exists", http.StatusBadRequest)
 		return
 	}
 
-	user := api.users.AddUser(jsondata.Username, jsondata.Email, jsondata.Password)
+	user, err := api.handler.Users.AddUser(jsondata.Username, jsondata.Email, jsondata.Password)
+	if err != nil {
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		utils.Log.WithField("error", err).Error("error adding user")
+		return
+	}
 	jsontoken := auth.GetJSONToken(user)
 
 	w.Header().Set("Conent-Type", "application/json")
@@ -57,16 +62,28 @@ func (api *API) UserLogin(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	user := api.users.FindUser(jsondata.Username)
+	user, err := api.handler.Users.FindUser(jsondata.Username)
+	if err != nil {
+		http.Error(w, "Internal error", http.StatusInternalServerError)
+		utils.Log.WithField("error", err).Error("error adding user")
+		return
+	}
+
 	if user.Username == "" {
-		user = api.users.FindUserByEmail(jsondata.Username)
+		user, err = api.handler.Users.FindUserByEmail(jsondata.Username)
+		if err != nil {
+			http.Error(w, "Internal error", http.StatusInternalServerError)
+			utils.Log.WithField("error", err).Error("error adding user")
+			return
+		}
+
 		if user.Username == "" {
 			http.Error(w, "Username or email not found", http.StatusBadRequest)
 			return
 		}
 	}
 
-	if !api.users.CheckPassword(user.Password, jsondata.Password) {
+	if !api.handler.Users.CheckPassword(user.Password, jsondata.Password) {
 		http.Error(w, "Bad password", http.StatusBadRequest)
 		return
 	}
@@ -80,9 +97,10 @@ func (api *API) UserLogin(w http.ResponseWriter, req *http.Request) {
 
 // GetUserFromContext - return User reference from header token
 func (api *API) GetUserFromContext(req *http.Request) *models.User {
-	userclaims := auth.GetUserClaimsFromContext(req)
-	user := api.users.FindUserByUUID(userclaims["uuid"].(string))
-	return user
+	/*userclaims := auth.GetUserClaimsFromContext(req)
+	user := api.handler.Users.FindUserByUUID(userclaims["uuid"].(string))
+	return user */
+	return nil
 }
 
 // UserInfo - example to get

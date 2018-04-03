@@ -14,7 +14,7 @@
                     <b-form-input
                         id="clientNameInput"
                         type="text"
-                        v-model="clientForm.Name"
+                        v-model="clientForm.name"
                         required
                         placeholder="Enter the client name"
                     ></b-form-input>
@@ -26,7 +26,7 @@
                     <b-form-input
                         id="clientIPInput"
                         type="text"
-                        v-model="clientForm.IP"
+                        v-model="clientForm.ip"
                         required
                         placeholder="Enter the client IP"
                     ></b-form-input>
@@ -46,7 +46,7 @@
                     label-for="groupCommandSelect">
                     <b-form-select
                         id="groupCommandSelect"
-                        v-model="groupCommandForm.Command"
+                        v-model="groupCommandForm.command"
                         :options="commandOptions" />
                 </b-form-group>
             </b-form>
@@ -65,7 +65,7 @@
                     <b-form-input
                         id="groupNameInput"
                         type="text"
-                        v-model="groupForm.Name"
+                        v-model="groupForm.name"
                         required
                         placeholder="Enter the group name"
                     ></b-form-input>
@@ -87,7 +87,7 @@
                     <b-form-input
                         id="commandInput"
                         type="text"
-                        v-model="commandForm.Command"
+                        v-model="commandForm.command"
                         required
                         placeholder="Enter the command"
                     ></b-form-input>
@@ -99,7 +99,7 @@
                     <b-form-input
                         id="nameInput"
                         type="text"
-                        v-model="commandForm.Namn"
+                        v-model="commandForm.name"
                         required
                         placeholder="Enter the name of the command"
                     ></b-form-input>
@@ -111,7 +111,7 @@
                     <b-form-input
                         id="descriptionInput"
                         type="text"
-                        v-model="commandForm.Description"
+                        v-model="commandForm.description"
                         required
                         placeholder="Enter the description of the command"
                     ></b-form-input>
@@ -123,7 +123,7 @@
                     <b-form-select
                         id="commandInput"
                         :options="formatOptions"
-                        v-model="commandForm.Format"
+                        v-model="commandForm.format"
                         required
                     ></b-form-select>
                 </b-form-group>
@@ -144,27 +144,27 @@ export default {
     computed: {
         commandOptions () {
             return this.$store.state.commands.map((o) => {
-                return { value: o.ID, text: o.Namn }
+                return { value: o.id, text: o.name }
             })
         }
     },
     data: function () {
         return {
             commandForm: {
-                Command: '',
-                Namn: '',
-                Description: '',
-                Format: ''
+                command: '',
+                name: '',
+                description: '',
+                format: ''
             },
             groupForm: {
-                Name: ''
+                name: ''
             },
             groupCommandForm: {
-                Command: ''
+                command: ''
             },
             clientForm: {
-                Name: '',
-                IP: ''
+                name: '',
+                ip: ''
             },
             formatOptions
         }
@@ -182,14 +182,14 @@ export default {
         ]),
         async createClientModal (e) {
             // Validate the form
-            if (this.clientForm.Name === '') {
+            if (this.clientForm.name === '') {
                 VueNotifications.error({
                     message: 'Please specify a client name',
                     timeout: 5000
                 })
                 return
             }
-            if (this.clientForm.IP === '') {
+            if (this.clientForm.ip === '') {
                 VueNotifications.error({
                     message: 'Please specify a IP',
                     timeout: 5000
@@ -197,7 +197,7 @@ export default {
                 return
             }
             // Validate that the IP is a correct IP
-            if (!IPRegex.test(this.clientForm.IP)) {
+            if (!IPRegex.test(this.clientForm.ip)) {
                 VueNotifications.error({
                     message: 'Please specify a valid IP',
                     timeout: 5000
@@ -206,7 +206,7 @@ export default {
             }
 
             try {
-                await this.createClient({namn: this.clientForm.Name, ip: this.clientForm.IP})
+                await this.createClient({name: this.clientForm.name, ip: this.clientForm.ip})
             } catch (e) {
                 VueNotifications.error({
                     message: e,
@@ -214,11 +214,11 @@ export default {
                 })
                 return
             }
-            this.clientForm = { Name: '', IP: '' }
+            this.clientForm = { name: '', ip: '' }
             this.hideClientModal()
         },
         async createGroupCommand (e) {
-            if (this.groupCommandForm.Command === '') {
+            if (this.groupCommandForm.command === '') {
                 VueNotifications.error({
                     message: 'Please select a valid command',
                     timeout: 5000
@@ -227,7 +227,7 @@ export default {
             }
 
             try {
-                await this.addGroupCommand({group_name: this.$store.state.activeGroupCommand, command_id: this.groupCommandForm.Command})
+                await this.addGroupCommand({group_name: this.$store.state.activeGroupCommand, command_id: this.groupCommandForm.command})
             } catch (e) {
                 VueNotifications.error({
                     message: e,
@@ -235,11 +235,11 @@ export default {
                 })
                 return
             }
-            this.groupCommandForm = { Command: '' }
+            this.groupCommandForm = { command: '' }
             this.hideGroupCommandModal()
         },
         async createGroupModal (e) {
-            if (this.groupForm.Name === '') {
+            if (this.groupForm.name === '') {
                 VueNotifications.error({
                     message: 'Please type a valid name',
                     timeout: 5000
@@ -247,7 +247,7 @@ export default {
                 return
             }
 
-            if (await this.createGroup(this.groupForm.Name)) {
+            if (await this.createGroup(this.groupForm.name)) {
                 VueNotifications.error({
                     message: 'This group already exists',
                     timeout: 5000
@@ -255,26 +255,26 @@ export default {
                 return
             }
 
-            this.groupForm = { Name: '' }
+            this.groupForm = { name: '' }
             this.hideGroupModal()
         },
         sendCommandModal (e) {
             // Evaluate all values
-            if (this.commandForm.Command === '') {
+            if (this.commandForm.command === '') {
                 VueNotifications.error({
                     message: 'Please type a valid command',
                     timeout: 5000
                 })
                 return
             }
-            if (this.commandForm.Name === '') {
+            if (this.commandForm.name === '') {
                 VueNotifications.error({
                     message: 'Please type a valid name',
                     timeout: 5000
                 })
                 return
             }
-            if (this.commandForm.Description === '') {
+            if (this.commandForm.description === '') {
                 VueNotifications.error({
                     message: 'Please type a valid description',
                     timeout: 5000
@@ -291,10 +291,10 @@ export default {
                 })
 
             this.commandForm = {
-                Command: '',
-                Namn: '',
-                Description: '',
-                Format: ''
+                command: '',
+                name: '',
+                description: '',
+                format: ''
             }
             this.hideCommandModal()
         }

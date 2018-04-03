@@ -11,6 +11,7 @@ import (
 	"github.com/keiwi/web/api"
 	"github.com/keiwi/web/models"
 	"github.com/keiwi/web/routes"
+	"github.com/nats-io/go-nats"
 	"github.com/spf13/viper"
 	"github.com/urfave/negroni"
 )
@@ -27,14 +28,9 @@ func main() {
 	viper.AddConfigPath(".")
 
 	viper.SetDefault("log_dir", "./logs")
-	viper.SetDefault("log_syntax", "%date%_server.log")
+	viper.SetDefault("log_syntax", "%date%_web.log")
 	viper.SetDefault("log_level", "info")
-
-	viper.SetDefault("mysql_username", "root")
-	viper.SetDefault("mysql_password", "")
-	viper.SetDefault("mysql_host", "127.0.0.1")
-	viper.SetDefault("mysql_port", "3306")
-	viper.SetDefault("mysql_database", "")
+	viper.SetDefault("nats_delay", 10)
 
 	if err := viper.ReadInConfig(); err != nil {
 		utils.Log.Debug("Config file not found, saving default")
@@ -49,18 +45,16 @@ func main() {
 		Logname: viper.GetString("log_syntax"),
 	})
 
-	db := models.NewMysqlDB(
-		viper.GetString("mysql_username"),
-		viper.GetString("mysql_password"),
-		viper.GetString("mysql_host"),
-		viper.GetString("mysql_port"),
-		viper.GetString("mysql_database"),
-	)
+	db, err := models.NewHandler(nats.DefaultURL)
+	if err != nil {
+		utils.Log.WithError(err).Fatal("error when initializing handler")
+		return
+	}
 
-	api := api.NewAPI(db)
-	routes := routes.NewRoutes(api)
+	apiHandler := api.NewAPI(db)
+	routesHandler := routes.NewRoutes(apiHandler)
 	n := negroni.New(negroni.NewRecovery(), NewLogger())
-	n.UseHandler(routes)
+	n.UseHandler(routesHandler)
 	n.Run(":3000")
 }
 
@@ -85,7 +79,7 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request, next http.Ha
 		Logger:    utils.Log,
 		Level:     log.DebugLevel,
 		Timestamp: start,
-		Message:   "[negroni]",
+		Message:   "[negroni] HTTP",
 		Fields: log.Fields{
 			"Status":   res.Status(),
 			"Duration": time.Since(start),

@@ -10,8 +10,8 @@
                 <td :style="tdStyle">
                     <template v-if="!edit || (edit && (column.edit == '' || column.edit == null))">{{userData != null ? userData[column.field] : ''}}</template>
                     <template v-if="edit && column.edit == 'dropdown'" v-for="(value, valueIndex) in column.values" >
-                        <b-form-checkbox :key="valueIndex" :plain="true" v-model="value.Checked" style="margin-bottom: 0"> {{value.Name}}</b-form-checkbox>
-                        <br :key="valueIndex">
+                        <b-form-checkbox :key="valueIndex + '-groups_checkbox'" :plain="true" v-model="value.checked" style="margin-bottom: 0"> {{value.name}}</b-form-checkbox>
+                        <br :key="valueIndex + '-groups_br'">
                     </template>
                     <input v-if="edit && column.edit == 'input'" type="text" v-model="column.value">
                 </td>
@@ -36,8 +36,8 @@
                 for (let c of this.columns) {
                     if (c.title === 'Groups') {
                         for (let g of c.values) {
-                            if (g.Checked) {
-                                groups += g.Name + ','
+                            if (g.checked) {
+                                groups += g.id + ','
                             }
                         }
                     }
@@ -50,30 +50,30 @@
                 }
                 groups = groups.replace(/,\s*$/, '')
 
-                if (groups !== this.userData.Groups) {
+                if (groups !== this.userData.groups) {
                     try {
-                        await API.editClient({id: this.userData.ID, Option: 'group_names', Value: groups})
-                        this.userData.Groups = groups
+                        await API.editClient({id: this.userData.id, Option: 'groups', Value: groups})
+                        this.userData.groups = groups
                     } catch (e) {
                         VueNotifications.error({message: e})
                         return
                     }
                 }
 
-                if (ip !== this.userData.IP) {
+                if (ip !== this.userData.ip) {
                     try {
-                        await API.editClient({id: this.userData.ID, Option: 'ip', Value: ip})
-                        this.userData.IP = ip
+                        await API.editClient({id: this.userData.id, Option: 'ip', Value: ip})
+                        this.userData.ip = ip
                     } catch (e) {
                         VueNotifications.error({message: e})
                         return
                     }
                 }
 
-                if (name !== this.userData.Name) {
+                if (name !== this.userData.name) {
                     try {
-                        await API.editClient({id: this.userData.ID, Option: 'name', Value: name})
-                        this.userData.Name = name
+                        await API.editClient({id: this.userData.id, Option: 'name', Value: name})
+                        this.userData.name = name
                     } catch (e) {
                         VueNotifications.error({message: e})
                         return

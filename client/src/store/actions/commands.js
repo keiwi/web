@@ -1,11 +1,13 @@
 import api from '../../api'
 
 export default {
+    showCommandModal: ({ commit }) => commit('showCommandModal'),
+    hideCommandModal: ({ commit }) => commit('hideCommandModal'),
     createCommand: ({ commit }, payload) => {
         return new Promise((resolve, reject) => {
             api.createCommand(payload)
                 .then((response) => {
-                    payload.ID = response.data.id
+                    payload.id = response.data.id
                     commit('createCommand', payload)
                     resolve(response)
                 }, (response) => {
@@ -28,13 +30,17 @@ export default {
         return new Promise((resolve, reject) => {
             api.getCommand()
                 .then((response) => {
+                    if (response == null) {
+                        resolve()
+                        return
+                    }
                     for (let c of response) {
                         commit('createCommand', {
-                            ID: c.id,
-                            Command: c.command,
-                            Namn: c.namn,
-                            Description: c.description,
-                            Format: c.format
+                            id: c.id,
+                            command: c.command,
+                            name: c.name,
+                            description: c.description,
+                            format: c.format
                         })
                     }
                     resolve()
@@ -43,11 +49,11 @@ export default {
                 })
         })
     },
-    deleteCommand: ({ commit }, ID) => {
+    deleteCommand: ({ commit }, id) => {
         return new Promise((resolve, reject) => {
-            api.deleteCommand(ID)
+            api.deleteCommand(id)
                 .then((response) => {
-                    commit('deleteCommand', ID)
+                    commit('deleteCommand', id)
                     resolve(response)
                 }, (response) => {
                     reject(response)

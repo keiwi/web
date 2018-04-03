@@ -59,7 +59,7 @@
         },
         methods: {
             handleQueryChange () {
-                let data = filter(this.checks, this.query)
+                let data = filter(this.checks || [], this.query)
                 this.data = data.rows
                 this.total = data.total
             }
@@ -69,19 +69,21 @@
                 let cmds = []
                 if (this.userData == null) return []
 
-                for (let group of this.userData.Groups.split(',')) {
-                    for (let g of this.$store.state.groups) {
-                        if (group === g.Name) {
-                            for (let cmd of g.Commands) {
-                                let exists = false
-                                for (let id of cmds) {
-                                    if (id === cmd.CommandID) {
-                                        exists = true
-                                        break
+                if (typeof this.userData.groups !== 'undefined') {
+                    for (let group of this.userData._group_ids) {
+                        for (let g of this.$store.state.groups) {
+                            if (group === g.id) {
+                                for (let cmd of g.commands) {
+                                    let exists = false
+                                    for (let id of cmds) {
+                                        if (id === cmd.command_id) {
+                                            exists = true
+                                            break
+                                        }
                                     }
-                                }
-                                if (!exists) {
-                                    cmds.push(cmd.CommandID)
+                                    if (!exists) {
+                                        cmds.push(cmd.command_id)
+                                    }
                                 }
                             }
                         }
@@ -90,15 +92,15 @@
 
                 let data = []
                 try {
-                    data = await API.getClientCMDIDChecks({client_id: this.userData.ID, command_id: cmds})
+                    data = await API.getClientCMDIDChecks({client_id: this.userData.id, command_id: cmds})
                 } catch (e) {
                     VueNotifications.error({message: e})
                 }
 
                 for (let i in data) {
                     for (let c of this.$store.state.commands) {
-                        if (data[i].command_id === c.ID) {
-                            data[i].command_name = c.Namn
+                        if (data[i].command_id === c.id) {
+                            data[i].command_name = c.name
                             break
                         }
                     }

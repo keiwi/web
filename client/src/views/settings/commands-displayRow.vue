@@ -8,26 +8,26 @@
         <b-row style="margin: 10px 0">
             <b-col md="2" />
             <b-col md="1"><label for="input-command" style="margin-top: .5rem; margin-bottom: 0">Command:</label></b-col>
-            <b-col md="6"><input id="input-command" type="input" v-model="models.Command" class="form-control" style="border-radius:0.25em"></input></b-col>
+            <b-col md="6"><input id="input-command" type="input" v-model="models.command" class="form-control" style="border-radius:0.25em"></input></b-col>
         </b-row>
 
         <b-row style="margin: 10px 0">
             <b-col md="2" />
             <b-col md="1"><label for="input-name" style="margin-top: .5rem; margin-bottom: 0">Name:</label></b-col>
-            <b-col md="6"><input id="input-name" type="input" v-model="models.Namn" class="form-control" style="border-radius:0.25em"></input></b-col>
+            <b-col md="6"><input id="input-name" type="input" v-model="models.name" class="form-control" style="border-radius:0.25em"></input></b-col>
         </b-row>
 
         <b-row style="margin: 10px 0">
             <b-col md="2" />
             <b-col md="1"><label for="input-description" style="margin-top: .5rem; margin-bottom: 0">Description:</label></b-col>
-            <b-col md="6"><input id="input-description" type="input" v-model="models.Description" class="form-control" style="border-radius:0.25em"></input></b-col>
+            <b-col md="6"><input id="input-description" type="input" v-model="models.description" class="form-control" style="border-radius:0.25em"></input></b-col>
         </b-row>
 
         <b-row style="margin: 10px 0">
             <b-col md="2" />
-            <b-col md="1"><label for="input-command" style="margin-top: .5rem; margin-bottom: 0">Command:</label></b-col>
+            <b-col md="1"><label for="input-command" style="margin-top: .5rem; margin-bottom: 0">Format:</label></b-col>
             <b-col md="6">
-                <b-form-select :options="formatOptions" v-model="models.Format" />
+                <b-form-select :options="formatOptions" v-model="models.format" />
             </b-col>
         </b-row>
 
@@ -56,10 +56,10 @@
         computed: {
             models () {
                 return {
-                    Command: this.row.Command,
-                    Description: this.row.Description,
-                    Namn: this.row.Namn,
-                    Format: this.row.Format
+                    command: this.row.command,
+                    description: this.row.description,
+                    name: this.row.name,
+                    format: this.row.format
                 }
             }
         },
@@ -74,21 +74,21 @@
                 'deleteCommand'
             ]),
             saveCommand () {
-                if (this.row.Command !== this.models.Command) {
-                    notify(this.editCommand, { id: this.row.ID, option: 'Command', value: this.models.Command })
+                if (this.row.command !== this.models.command) {
+                    notify(this.editCommand, { id: this.row.id, option: 'command', value: this.models.command })
                 }
-                if (this.row.Description !== this.models.Description) {
-                    notify(this.editCommand, { id: this.row.ID, option: 'Description', value: this.models.Description })
+                if (this.row.description !== this.models.description) {
+                    notify(this.editCommand, { id: this.row.id, option: 'description', value: this.models.description })
                 }
-                if (this.row.Namn !== this.models.Namn) {
-                    notify(this.editCommand, { id: this.row.ID, option: 'Namn', value: this.models.Namn })
+                if (this.row.name !== this.models.name) {
+                    notify(this.editCommand, { id: this.row.id, option: 'name', value: this.models.name })
                 }
-                if (this.row.Format !== this.models.Format) {
-                    notify(this.editCommand, { id: this.row.ID, option: 'Format', value: this.models.Format })
+                if (this.row.format !== this.models.format) {
+                    notify(this.editCommand, { id: this.row.id, option: 'format', value: this.models.format })
                 }
             },
             removeCommand () {
-                notify(this.deleteCommand, this.row.ID)
+                notify(this.deleteCommand, this.row.id)
             }
         }
     }

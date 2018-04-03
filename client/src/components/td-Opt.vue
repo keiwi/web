@@ -38,7 +38,7 @@
                 nested.$toggle(comp, true)
             },
             removeCommand () {
-                notify(this.deleteCommand, this.row.ID)
+                notify(this.deleteCommand, this.row.id)
             }
         }
 }

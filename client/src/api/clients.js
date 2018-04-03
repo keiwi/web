@@ -7,7 +7,7 @@ export default {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.CREATE_CLIENTS_URL, payload).then(response => {
                 if (response.body.success) resolve(response.body)
-                else reject(response.body)
+                else reject(response.body.message)
             }, response => {
                 reject(response.statusText)
             })
@@ -27,7 +27,8 @@ export default {
     getIDClients (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.GET_ID_CLIENTS_URL, payload).then(response => {
-                resolve(response.body)
+                if (response.body.success === false) reject(response.body.message)
+                else resolve(response.body)
             }, response => {
                 reject(response.statusText)
             })

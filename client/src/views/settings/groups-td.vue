@@ -18,7 +18,7 @@
             v-b-tooltip.hover.top
             title="Add a command to the group"
             variant="success"
-            @click='showGroupCommandModal(row.Name)'>
+            @click='showGroupCommandModal(row.name)'>
             <i class="fa fa-plus-square"></i>
         </b-btn>
     </div>

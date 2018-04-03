@@ -7,7 +7,7 @@ export default {
         return new Promise((resolve, reject) => {
             api.createClient(payload)
                 .then((response) => {
-                    payload.ID = response.data.id
+                    payload.id = response.data.id
                     commit('createClient', payload)
                     resolve(response)
                 }, (response) => {
@@ -21,10 +21,10 @@ export default {
                 .then((response) => {
                     for (let c of response) {
                         commit('createClient', {
-                            ID: c.id,
-                            namn: c.namn,
+                            id: c.id,
+                            name: c.name,
                             ip: c.ip,
-                            Groups: c.group_names.split(',')
+                            groups: c.groups
                         })
                     }
                     resolve()

@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	jwtmiddleware "github.com/auth0/go-jwt-middleware"
-	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/keiwi/web/models"
+	"github.com/auth0/go-jwt-middleware"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/keiwi/utils/models"
 )
 
 // signinKey set up a global string for our secret
@@ -26,7 +26,7 @@ var JwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 func GetToken(user *models.User) string {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["uuid"] = user.UUID
+	claims["uuid"] = user.ID
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 	signedToken, _ := token.SignedString(signinKey)
 	return signedToken

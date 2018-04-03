@@ -27,25 +27,25 @@
                 'deleteGroupCommand'
             ]),
             save () {
-                let cmd = this.$store.getters.getGroupCommand(this.row.ID)
+                let cmd = this.$store.getters.getGroupCommand(this.row.id)
                 if (!cmd) return
-                if (cmd.NextCheck !== this.row.NextCheck) {
-                    this.editGroup({
-                        id: this.row.ID,
+                if (cmd.next_check !== this.row.next_check) {
+                    notify(this.editGroup, {
+                        id: this.row.id,
                         option: 'NextCheck',
-                        value: parseInt(this.row.NextCheck)
+                        value: parseInt(this.row.next_check)
                     })
                 }
-                if (cmd.StopError !== this.row.StopError) {
-                    this.editGroup({
-                        id: this.row.ID,
+                if (cmd.stop_error !== this.row.stop_error) {
+                    notify(this.editGroup, {
+                        id: this.row.id,
                         option: 'StopError',
-                        value: this.row.StopError
+                        value: this.row.stop_error
                     })
                 }
             },
             deleteCommand () {
-                notify(this.deleteGroupCommand, {id: this.row.ID})
+                notify(this.deleteGroupCommand, {id: this.row.id})
             }
         }
     }

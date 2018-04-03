@@ -2,11 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"math"
 	"net/http"
+	"time"
 
 	"github.com/keiwi/utils"
-	"github.com/keiwi/web/models"
+	"github.com/keiwi/utils/models"
 )
 
 // DeleteCheck deletes a specific check from the database
@@ -21,18 +21,19 @@ func (api *API) DeleteCheck(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	err := api.checks.DeleteWithID(jsondata.ID)
+	err := api.handler.Checks.DeleteWithID(jsondata.ID)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "An internal error occured when deleting the check", nil)
 		return
 	}
+
 	outputJSON(w, true, "Successfully deleted the check", nil)
 }
 
 // GetChecks returns an array of all the checks in the database
 func (api *API) GetChecks(w http.ResponseWriter, res *http.Request) {
-	checks, err := api.checks.FindAll()
+	checks, err := api.handler.Checks.FindAll()
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
@@ -59,7 +60,7 @@ func (api *API) GetCheckWithID(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	check, err := api.checks.Find(jsondata.ID)
+	check, err := api.handler.Checks.Find(jsondata.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
@@ -76,8 +77,8 @@ func (api *API) GetCheckWithID(w http.ResponseWriter, res *http.Request) {
 
 // ClientCommandID is the expected data when trying to find checks with specific client id and command id
 type ClientCommandID struct {
-	ClientID  uint   `json:"client_id"`
-	CommandID []uint `json:"command_id"`
+	ClientID  string   `json:"client_id"`
+	CommandID []string `json:"command_id"`
 }
 
 // GetWithClientIDAndCommandID tries to find checks with specific client id and command id
@@ -91,9 +92,9 @@ func (api *API) GetWithClientIDAndCommandID(w http.ResponseWriter, res *http.Req
 		return
 	}
 
-	checks := []*models.Check{}
+	var checks []models.Check
 	for _, cmd := range jsondata.CommandID {
-		dataChecks, err := api.checks.FindWithClientIDAndCommandID(jsondata.ClientID, cmd)
+		dataChecks, err := api.handler.Checks.FindWithClientIDAndCommandID(jsondata.ClientID, cmd)
 		if err != nil {
 			utils.Log.Error(err.Error())
 			outputJSON(w, false, "An internal error occured when trying to find the checks", nil)
@@ -112,8 +113,8 @@ func (api *API) GetWithClientIDAndCommandID(w http.ResponseWriter, res *http.Req
 
 // ChecksBetweenDateClient is the expected data when trying to find checks between dates with a specific client
 type ChecksBetweenDateClient struct {
-	ClientID  uint   `json:"client_id"`
-	CommandID uint   `json:"command_id"`
+	ClientID  string `json:"client_id"`
+	CommandID string `json:"command_id"`
 	From      string `json:"from"`
 	To        string `json:"to"`
 	Max       int    `json:"max"`
@@ -130,30 +131,38 @@ func (api *API) GetWithChecksBetweenDateClient(w http.ResponseWriter, res *http.
 		return
 	}
 
-	checks, err := api.checks.GetChecksBetweenDateClient(jsondata.From, jsondata.To, jsondata.CommandID, jsondata.ClientID)
+	// TODO: Check the time layout
+	from, err := time.Parse("2006-01-02 15:04:05", jsondata.From)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
 
-	if len(checks) < jsondata.Max {
-		js, _ := json.Marshal(checks)
-		if _, err := w.Write(js); err != nil {
-			utils.Log.Fatal(err.Error())
-		}
+	to, err := time.Parse("2006-01-02 15:04:05", jsondata.To)
+	if err != nil {
+		utils.Log.Error(err.Error())
+		outputJSON(w, false, "An internal error occured", nil)
+		return
 	}
 
-	ch := []models.Check{}
-	step := int(math.Ceil(float64(len(checks)) / float64(jsondata.Max)))
-	for i := len(checks) - 1; i >= 0; i -= step {
-		ch = append(ch, checks[i])
+	checks, err := api.handler.Checks.GetChecksBetweenDateClient(from, to, jsondata.CommandID, jsondata.ClientID, jsondata.Max)
+	if err != nil {
+		utils.Log.Error(err.Error())
+		outputJSON(w, false, "An internal error occured", nil)
+		return
 	}
 
-	js, _ := json.Marshal(ch)
+	js, _ := json.Marshal(checks)
 	if _, err := w.Write(js); err != nil {
 		utils.Log.Fatal(err.Error())
 	}
+}
+
+// SendManualCheck tries to send a manual check to a specific client
+func (api *API) SendManualCheck(w http.ResponseWriter, res *http.Request) {
+	// decoder := json.NewDecoder(res.Body)
+
 }
 
 // EditClient modifies an existing client in the database

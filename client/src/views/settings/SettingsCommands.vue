@@ -1,5 +1,6 @@
 <template>
     <div class='settings-commands'>
+        <h6>Commands</h6>
         <div class='btn-group btn-group-md' style='margin-bottom:10px'>
             <button type='button' class='btn btn-warning' style='border-radius:5px 0 0 5px' @click='removeCommands'>
                 <i class='fa fa-trash'></i> Delete
@@ -49,11 +50,11 @@ export default {
             HeaderSettings: false,
             'tbl-class': ['table-bordered'],
             columns: [
-                { title: 'ID', field: 'ID', sortable: true },
-                { title: 'Command', field: 'Command', thComp: 'FilterTh', tdStyle: { fontStyle: 'italic' } },
-                { title: 'Name', field: 'Namn', sortable: true },
-                { title: 'Description', field: 'Description' },
-                { title: 'Format', field: 'Format', sortable: true },
+                { title: 'ID', field: 'id', sortable: true },
+                { title: 'Command', field: 'command', thComp: 'FilterTh', tdStyle: { fontStyle: 'italic' } },
+                { title: 'Name', field: 'name', sortable: true },
+                { title: 'Description', field: 'description' },
+                { title: 'Format', field: 'format', sortable: true },
                 { title: 'Actions', tdComp: 'OptTd' }
             ],
             query: { 'limit': 10, 'offset': 0, 'sort': '', 'order': '' },
@@ -92,7 +93,7 @@ export default {
             }
 
             for (let row of this.selection) {
-                this.deleteCommand(row.ID).then((response) => {
+                this.deleteCommand(row.id).then((response) => {
                     if (!response.success) VueNotifications.error({message: response.message})
                 }, (response) => VueNotifications.error({message: response}))
             }

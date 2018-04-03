@@ -3,16 +3,17 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/keiwi/utils"
-	"github.com/keiwi/web/models"
+	"github.com/keiwi/utils/models"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // ClientJSON - json data expected for creating a new client
 type ClientJSON struct {
-	GroupNames string `json:"group_names"`
-	IP         string `json:"ip"`
-	Namn       string `json:"namn"`
+	IP   string `json:"ip"`
+	Name string `json:"name"`
 }
 
 // CreateClient - Handler for creating a new client
@@ -32,18 +33,17 @@ func (api *API) CreateClient(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	if jsondata.Namn == "" {
-		outputJSON(w, false, "Namn is missing", nil)
+	if jsondata.Name == "" {
+		outputJSON(w, false, "Name is missing", nil)
 		return
 	}
 
 	client := &models.Client{
-		GroupNames: jsondata.GroupNames,
-		Namn:       jsondata.Namn,
-		IP:         jsondata.IP,
+		Name: jsondata.Name,
+		IP:   jsondata.IP,
 	}
 
-	if err := api.clients.Create(client); err != nil {
+	if err := api.handler.Clients.Create(client); err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "An internal error occured", nil)
 		return
@@ -64,18 +64,19 @@ func (api *API) DeleteClient(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	err := api.clients.DeleteWithID(jsondata.ID)
+	err := api.handler.Clients.DeleteWithID(jsondata.ID)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "An internal error occured when deleting the client", nil)
 		return
 	}
+
 	outputJSON(w, true, "Successfully deleted the client", nil)
 }
 
 // GetClients returns an array of all the clients in the database
 func (api *API) GetClients(w http.ResponseWriter, res *http.Request) {
-	clients, err := api.clients.FindAll()
+	clients, err := api.handler.Clients.FindAll()
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
@@ -102,7 +103,7 @@ func (api *API) GetClientWithID(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	client, err := api.clients.Find(jsondata.ID)
+	client, err := api.handler.Clients.Find(jsondata.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
@@ -129,7 +130,7 @@ func (api *API) EditClient(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
-	client, err := api.clients.Find(jsondata.ID)
+	client, err := api.handler.Clients.Find(jsondata.ID)
 	if err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "Can't find a client with this ID", nil)
@@ -142,22 +143,90 @@ func (api *API) EditClient(w http.ResponseWriter, res *http.Request) {
 		return
 	}
 
+	updates := bson.M{}
 	switch jsondata.Option {
-	case "group_names", "GroupNames":
-		client.GroupNames = v
 	case "name", "Name", "namn", "Namn":
-		client.Namn = v
+		updates["name"] = v
+		client.Name = v
 	case "ip", "IP":
+		updates["ip"] = v
 		client.IP = v
+	case "groups", "Groups":
+		del, add := seperateGroups(objectIDArrayToString(client.GroupIDs), v)
+		for _, d := range del {
+			if d == "" {
+				continue
+			}
+			for i, g := range client.GroupIDs {
+				id := g.Hex()
+				if d == id {
+					client.GroupIDs = append(client.GroupIDs[:i], client.GroupIDs[i+1:]...)
+					break
+				}
+			}
+		}
+		for _, a := range add {
+			if a == "" {
+				continue
+			}
+			group, err := api.handler.Groups.Find(a)
+			if err != nil || group == nil {
+				utils.Log.Error(err.Error())
+				outputJSON(w, false, "Can't find a group with the id "+a, nil)
+				return
+			}
+			client.GroupIDs = append(client.GroupIDs, bson.ObjectIdHex(a))
+		}
+		updates["group_ids"] = client.GroupIDs
 	default:
 		outputJSON(w, false, "Please provide a correct column", nil)
 		return
 	}
 
-	if err = api.clients.Save(client); err != nil {
+	if err = api.handler.Clients.Save(jsondata.ID, utils.Updates{"$set": updates}); err != nil {
 		utils.Log.Error(err.Error())
 		outputJSON(w, false, "An internal error occured when saving the client", nil)
 		return
 	}
 	outputJSON(w, true, "Successfully saved the changes for the client", client)
+}
+
+func objectIDArrayToString(list []bson.ObjectId) string {
+	length := len(list)
+	out := ""
+	for i, v := range list {
+		if i >= length-1 {
+			out += v.Hex()
+		} else {
+			out += v.Hex() + ", "
+		}
+	}
+	return out
+}
+
+func seperateGroups(old, new string) (deleted, added []string) {
+	splitOld := strings.Split(old, ",")
+	splitNew := strings.Split(new, ",")
+
+	deleted = findDifference(splitOld, splitNew)
+	added = findDifference(splitNew, splitOld)
+	return
+}
+
+func findDifference(a1, a2 []string) []string {
+	var out []string
+	for _, i1 := range a1 {
+		m := false
+		for _, i2 := range a2 {
+			if i1 == i2 {
+				m = true
+				break
+			}
+		}
+		if m {
+			continue
+		}
+		out = append(out, i1)
+	}
+	return out
 }

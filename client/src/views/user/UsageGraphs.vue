@@ -1,15 +1,19 @@
 <template>
-    <div class='chart' style="height: 700px" />
+    <!-- <div class='chart' style="height: 700px" /> -->
+    <div class="chart" style="width: 90%; height: 700px"></div>
 </template>
 
 <script>
-    import SimpleGraph from '../../utils/_graphs'
-    import moment from 'moment'
+    // import SimpleGraph from '../../utils/_graphs'
+    // import moment from 'moment'
+    import Plotly from 'plotly.js/dist/plotly'
 
     export default {
         props: ['values', 'format', 'chartData'],
         mounted () {
-            this.graphs = new SimpleGraph(this.$el, {
+            console.log(this.chartData)
+            this.graph = Plotly.plot(this.$el, this.chartData.dataSets, this.chartData.layout)
+            /* this.graphs = new SimpleGraph(this.$el, {
                 onDataHover (value, index) {
                     return `
                         Client ID: ${value.item.client_id}<br>
@@ -23,22 +27,20 @@
                     `
                 }
             })
-            this.graphs.update(this.chartData)
+            this.graphs.update(this.chartData) */
         },
         watch: {
             chartData: {
                 handler (newValue) {
-                    if (this.format === 'procent') {
-                        this.graphs.options({yPrefix: '.2f'})
-                    }
-                    this.graphs.update(newValue)
+                    console.log(newValue)
+                    this.graph = Plotly.react(this.$el, newValue.dataSets, newValue.layout)
                 },
                 nested: true
             }
         },
         data () {
             return {
-                graphs: {}
+                graph: {}
             }
         }
     }

@@ -138,7 +138,7 @@
 <script>
 import cSwitch from './Switch'
 export default {
-    name: 'aside',
+    name: 'app-aside',
     components: {
         cSwitch
     }

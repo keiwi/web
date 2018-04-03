@@ -1,98 +1,203 @@
 package models
 
 import (
+	"errors"
 	"time"
 
-	// import mysql driver
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/keiwi/utils"
+	"github.com/keiwi/utils/models"
+	"github.com/nats-io/go-nats"
+	"github.com/spf13/viper"
+	"gopkg.in/mgo.v2/bson"
 )
-
-// Check struct
-type Check struct {
-	ID        uint       `gorm:"primary_key" json:"id"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `sql:"index" json:"-"`
-	CommandID uint       `json:"command_id"`
-	ClientID  uint       `json:"client_id"`
-	Response  string     `gorm:"not null" json:"response"`
-	Checked   bool       `json:"checked"`
-	Error     bool       `json:"error"`
-	Finished  bool       `json:"finished"`
-}
 
 // ChecksManager struct
 type ChecksManager struct {
-	db *DB
+	conn *nats.Conn
 }
 
 // NewChecksManager - Creates a new *ChecksManager that can be used for managing checks.
-func NewChecksManager(db *DB) (*ChecksManager, error) {
-	db.AutoMigrate(&Check{})
+func NewChecksManager(conn *nats.Conn) (*ChecksManager, error) {
 	manager := ChecksManager{}
-	manager.db = db
+	manager.conn = conn
 	return &manager, nil
 }
 
 // GetChecksBetweenDate grabs all checks with a specific command id
 // between 2 different dates.
-func (state *ChecksManager) GetChecksBetweenDate(from, to string, commandID uint) []Check {
-	checks := []Check{}
-	state.db.Where("command_id = ? AND created_at >= FROM_UNIXTIME(?) AND created_at <= FROM_UNIXTIME(?)", commandID, from, to).Find(&checks)
-	return checks
+func (state *ChecksManager) GetChecksBetweenDate(from, to time.Time, commandID string) ([]models.Check, error) {
+	requestData := utils.FindOptions{
+		Filter: utils.Filter{"command_id": bson.ObjectIdHex(commandID), "created_at": bson.M{"$gte": from, "$lte": to}},
+		Sort:   utils.Sort{"created_at"},
+	}
+	data, err := bson.MarshalJSON(requestData)
+	if err != nil {
+		return nil, err
+	}
+
+	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	var checks []models.Check
+	err = bson.UnmarshalJSON(msg.Data, &checks)
+	if err != nil {
+		return nil, err
+	}
+	return checks, nil
 }
 
 // GetChecksBetweenDateClient is similiar to GetChecksBetweenDate
 // where it grabs all checks between 2 different dates with a specific
 // command id, the difference is that this function also grabs checks
 // with a specific command_id
-func (state *ChecksManager) GetChecksBetweenDateClient(from, to string, commandID, clientID uint) ([]Check, error) {
-	checks := []Check{}
-	err := state.db.Where("client_id = ? AND command_id = ? AND created_at >= ? AND created_at <= ?", clientID, commandID, from, to).Find(&checks).Error
-	return checks, err
+func (state *ChecksManager) GetChecksBetweenDateClient(from, to time.Time, commandID, clientID string, max int) ([]models.Check, error) {
+	requestData := utils.FindOptions{
+		Filter: utils.Filter{"command_id": bson.ObjectIdHex(commandID), "client_id": bson.ObjectIdHex(clientID), "created_at": bson.M{"$gte": from, "$lte": to}},
+		Sort:   utils.Sort{"created_at"},
+		Max:    utils.Max(max),
+	}
+	data, err := bson.MarshalJSON(requestData)
+	if err != nil {
+		return nil, err
+	}
+
+	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	var checks []models.Check
+	err = bson.UnmarshalJSON(msg.Data, &checks)
+	if err != nil {
+		return nil, err
+	}
+	return checks, nil
 }
 
 // Create inserts a new Check in the database
-func (state *ChecksManager) Create(check *Check) error {
-	return state.db.Create(check).Error
+func (state *ChecksManager) Create(check *models.Check) error {
+	check.CreatedAt = time.Now()
+	check.UpdatedAt = time.Now()
+
+	data, err := bson.MarshalJSON(check)
+	if err != nil {
+		return err
+	}
+	return state.conn.Publish("checks.create.send", data)
 }
 
 // FindAll grabs all of the existing Checks
-func (state *ChecksManager) FindAll() ([]Check, error) {
-	checks := []Check{}
-	err := state.db.Find(&checks).Error
-	return checks, err
+func (state *ChecksManager) FindAll() ([]models.Check, error) {
+	requestData := utils.FindOptions{
+		Sort: utils.Sort{"created_at"},
+	}
+	data, err := bson.MarshalJSON(requestData)
+	if err != nil {
+		return nil, err
+	}
+	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	var checks []models.Check
+	err = bson.UnmarshalJSON(msg.Data, &checks)
+	if err != nil {
+		return nil, err
+	}
+	return checks, nil
 }
 
 // Find tries to find an existing Check from a id
-func (state *ChecksManager) Find(id uint) (*Check, error) {
-	check := Check{}
-	err := state.db.Where("id = ?", id).Find(&check).Error
-	return &check, err
+func (state *ChecksManager) Find(id string) (*models.Check, error) {
+	requestData := utils.FindOptions{
+		Filter: utils.Filter{"_id": bson.ObjectIdHex(id)},
+		Sort:   utils.Sort{"created_at"},
+		Limit:  1,
+	}
+	data, err := bson.MarshalJSON(requestData)
+	if err != nil {
+		return nil, err
+	}
+
+	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	checks := []models.Check{}
+	err = bson.UnmarshalJSON(msg.Data, &checks)
+	if err != nil {
+		return nil, err
+	}
+	if len(checks) <= 0 {
+		return nil, errors.New("could not find any checks")
+	}
+	return &checks[0], nil
 }
 
 // FindWithClientIDAndCommandID tries to find an existing Check from a client ID and command ID
-func (state *ChecksManager) FindWithClientIDAndCommandID(client, command uint) ([]*Check, error) {
-	checks := []*Check{}
-	err := state.db.Where("client_id = ? AND command_id = ?", client, command).Order("created_at desc").Find(&checks).Error
-	return checks, err
+func (state *ChecksManager) FindWithClientIDAndCommandID(clientID, commandID string) ([]models.Check, error) {
+	requestData := utils.FindOptions{
+		Filter: utils.Filter{"command_id": bson.ObjectIdHex(commandID), "client_id": bson.ObjectIdHex(clientID)},
+		Sort:   utils.Sort{"-created_at"},
+		Limit:  1,
+	}
+	data, err := bson.MarshalJSON(requestData)
+	if err != nil {
+		return nil, err
+	}
+	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	if err != nil {
+		return nil, err
+	}
+
+	var checks []models.Check
+	err = bson.UnmarshalJSON(msg.Data, &checks)
+	if err != nil {
+		return nil, err
+	}
+	return checks, nil
 }
 
 // Save saves a Check from a Check struct
-func (state *ChecksManager) Save(check *Check) error {
-	return state.db.Save(&check).Error
+func (state *ChecksManager) Save(id string, updates utils.Updates) error {
+	updates["updated_at"] = time.Now()
+
+	requestData := utils.UpdateOptions{
+		Filter:  utils.Filter{"_id": bson.ObjectIdHex(id)},
+		Updates: updates,
+	}
+
+	data, err := bson.MarshalJSON(requestData)
+	if err != nil {
+		return err
+	}
+
+	return state.conn.Publish("checks.update.send", data)
 }
 
 // Delete removes an existing Check
 // from the database.
-func (state *ChecksManager) Delete(check *Check) error {
-	return state.db.Delete(&check).Error
+func (state *ChecksManager) Delete(check *models.Check) error {
+	requestData := utils.DeleteOptions{
+		Filter: utils.Filter{"_id": check.ID},
+	}
+
+	data, err := bson.MarshalJSON(requestData)
+	if err != nil {
+		return err
+	}
+
+	return state.conn.Publish("checks.delete.send", data)
 }
 
 // DeleteWithID is a wrapper for Delete that
 // creates a new Check instance from ID and then run the Delete function
-func (state *ChecksManager) DeleteWithID(id uint) error {
-	m := &Check{}
-	m.ID = id
+func (state *ChecksManager) DeleteWithID(id string) error {
+	m := &models.Check{}
+	m.ID = bson.ObjectId(id)
 	return state.Delete(m)
 }

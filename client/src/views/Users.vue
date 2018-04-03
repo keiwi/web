@@ -40,7 +40,7 @@ export default {
             self.handleQueryChange()
         }, 1000)
         eventbus.$on('click-table', (e, row) => {
-            this.$router.push({ name: 'User', params: { id: row.ID } })
+            this.$router.push({ name: 'User', params: { id: row.id } })
         })
     },
     computed: {
@@ -48,7 +48,7 @@ export default {
             let values = this.$store.state.clients
             values = CloneDeep(values)
             for (let i in values) {
-                values[i].Groups = values[i].Groups.join(', ')
+                values[i].groups = values[i].groups.join(', ')
             }
             return values
         }
@@ -60,12 +60,12 @@ export default {
             HeaderSettings: false,
             'tbl-class': ['table-bordered'],
             columns: [
-                { title: 'ID', field: 'ID', sortable: true, tdComp: 'tdEvent' },
-                { title: 'Name', field: 'Name', sortable: true, tdComp: 'tdEvent' },
-                { title: 'IP', field: 'IP', sortable: true, tdComp: 'tdEvent' },
-                { title: 'Groups', field: 'Groups', sortable: true, tdComp: 'tdEvent' },
-                { title: 'Latest Check', field: 'Latest Check', sortable: true, tdComp: 'tdEvent' },
-                { title: 'Active', field: 'Active', sortable: true, tdComp: 'tdEvent' }
+                { title: 'ID', field: 'id', sortable: true, tdComp: 'tdEvent' },
+                { title: 'Name', field: 'name', sortable: true, tdComp: 'tdEvent' },
+                { title: 'IP', field: 'ip', sortable: true, tdComp: 'tdEvent' },
+                { title: 'Groups', field: 'groups', sortable: true, tdComp: 'tdEvent' },
+                { title: 'Latest Check', field: 'latest', sortable: true, tdComp: 'tdEvent' },
+                { title: 'Active', field: 'active', sortable: true, tdComp: 'tdEvent' }
             ],
             query: { 'limit': 10, 'offset': 0, 'sort': '', 'order': '' },
             total: 0,
@@ -104,7 +104,7 @@ export default {
             }
 
             for (let row of this.selection) {
-                this.deleteClient({id: row.ID}).then((response) => {
+                this.deleteClient({id: row.id}).then((response) => {
                     if (!response.success) VueNotifications.error({message: response.message})
                 }, (response) => VueNotifications.error({message: response}))
             }

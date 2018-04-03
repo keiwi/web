@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"log"
 	"strconv"
 
 	"github.com/keiwi/utils"
@@ -13,96 +12,12 @@ import (
 
 // API struct
 type API struct {
-	users         *models.UserManager
-	groups        *models.GroupsManager
-	alerts        *models.AlertsManager
-	alertsOptions *models.AlertsOptionsManager
-	checks        *models.ChecksManager
-	commands      *models.CommandsManager
-	clients       *models.ClientsManager
-	servers       *models.ServersManager
-	uploads       *models.UploadsManager
+	handler *models.Handler
 }
 
 // NewAPI - Creates a new API
-func NewAPI(db *models.DB) *API {
-	utils.Log.Debug("Creating internal API")
-
-	utils.Log.Debug("Initialzing user manager")
-	usermgr, err := models.NewUserManager(db)
-	if err != nil {
-		utils.Log.WithField("error", err).Fatal("error when initializing user manager")
-	}
-	utils.Log.Debug("User manager initialization done")
-
-	utils.Log.Debug("Initialzing alerts manager")
-	alertsmgr, err := models.NewAlertsManager(db)
-	if err != nil {
-		utils.Log.WithField("error", err).Fatal("error when initializing alerts manager")
-	}
-	utils.Log.Debug("Alerts manager initialization done")
-
-	utils.Log.Debug("Initialzing alert options manager")
-	alertsoptsmgr, err := models.NewAlertsOptionsManager(db)
-	if err != nil {
-		utils.Log.WithField("error", err).Fatal("error when initializing alert options manager")
-	}
-	utils.Log.Debug("Alert options manager initialization done")
-
-	utils.Log.Debug("Initialzing checks manager")
-	checksmgr, err := models.NewChecksManager(db)
-	if err != nil {
-		utils.Log.WithField("error", err).Fatal("error when initializing checks manager")
-	}
-	utils.Log.Debug("Checks manager initialization done")
-
-	utils.Log.Debug("Initialzing clients manager")
-	clientsmgr, err := models.NewClientsManager(db)
-	if err != nil {
-		utils.Log.WithField("error", err).Fatal("error when initializing clients manager")
-	}
-	utils.Log.Debug("Clients manager initialization done")
-
-	utils.Log.Debug("Initialzing commands manager")
-	commandsmgr, err := models.NewCommandsManager(db)
-	if err != nil {
-		utils.Log.WithField("error", err).Fatal("error when initializing commands manager")
-	}
-	utils.Log.Debug("Commands manager initialization done")
-
-	utils.Log.Debug("Initialzing groups manager")
-	groupsmgr, err := models.NewGroupsManager(db)
-	if err != nil {
-		utils.Log.WithField("error", err).Fatal("error when initializing groups manager")
-	}
-	utils.Log.Debug("Groups manager initialization done")
-
-	utils.Log.Debug("Initialzing servers manager")
-	serversmgr, err := models.NewServersManager(db)
-	if err != nil {
-		utils.Log.WithField("error", err).Fatal("error when initializing servers manager")
-	}
-	utils.Log.Debug("Servers manager initialization done")
-
-	utils.Log.Debug("Initialzing upload manager")
-	uploadsmgr, err := models.NewUploadsManager(db)
-	if err != nil {
-		utils.Log.WithField("error", err).Fatal("error when initializing upload manager")
-	}
-	utils.Log.Debug("Upload manager initialization done")
-
-	utils.Log.Debug("API initialization done")
-	return &API{
-		users:         usermgr,
-		groups:        groupsmgr,
-		alerts:        alertsmgr,
-		alertsOptions: alertsoptsmgr,
-		checks:        checksmgr,
-		commands:      commandsmgr,
-		clients:       clientsmgr,
-		servers:       serversmgr,
-		uploads:       uploadsmgr,
-	}
+func NewAPI(handler *models.Handler) *API {
+	return &API{handler: handler}
 }
 
 // MessageJSON - json data for outputting
@@ -116,7 +31,7 @@ type MessageJSON struct {
 // in the POST request body to modify an existing
 // database record.
 type EditJSON struct {
-	ID     uint        `json:"id"`
+	ID     string      `json:"id"`
 	Option string      `json:"option"`
 	Value  interface{} `json:"value"`
 }
@@ -125,13 +40,13 @@ type EditJSON struct {
 // for example when deleting or trying to find a specific
 // data in the database
 type IDOptions struct {
-	ID uint `json:"id"`
+	ID string `json:"id"`
 }
 
 func outputJSON(w io.Writer, success bool, message string, data interface{}) {
 	out, _ := json.Marshal(MessageJSON{Success: success, Message: message, Data: data})
 	if _, err := w.Write(out); err != nil {
-		log.Fatal(err)
+		utils.Log.Fatal(err.Error())
 	}
 }
 
@@ -148,6 +63,17 @@ func convertToInt(i interface{}) (int64, error) {
 		}
 		return pi, nil
 	default:
-		return 0, errors.New("Invalid number type")
+		return 0, errors.New("invalid number type")
 	}
+}
+
+// Request is the struct that will be used when sending a request to a Keiwi server
+type Request struct {
+	Type      string `json:"type"`
+	Command   string `json:"command"`
+	GroupName string `json:"group_name"`
+	ID        string `json:"id"`
+	CommandID string `json:"command_id"`
+	GroupID   string `json:"group_id"`
+	Save      bool   `json:"save"`
 }

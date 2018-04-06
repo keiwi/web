@@ -35,7 +35,7 @@ func (state *ChecksManager) GetChecksBetweenDate(from, to time.Time, commandID s
 		return nil, err
 	}
 
-	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (state *ChecksManager) GetChecksBetweenDateClient(from, to time.Time, comma
 		return nil, err
 	}
 
-	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (state *ChecksManager) FindAll() ([]models.Check, error) {
 	if err != nil {
 		return nil, err
 	}
-	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (state *ChecksManager) Find(id string) (*models.Check, error) {
 		return nil, err
 	}
 
-	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (state *ChecksManager) FindWithClientIDAndCommandID(clientID, commandID str
 	if err != nil {
 		return nil, err
 	}
-	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("checks.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}

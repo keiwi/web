@@ -3,10 +3,10 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/keiwi/utils"
+	"github.com/keiwi/utils/log"
 	"github.com/keiwi/utils/models"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -27,7 +27,7 @@ func (api *API) RenameGroup(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding RenameGroup request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -48,7 +48,7 @@ func (api *API) RenameGroup(w http.ResponseWriter, res *http.Request) {
 
 	err := api.handler.Groups.UpdateName(jsondata.NewName, jsondata.OldName)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error updating a group name")
 		outputJSON(w, false, "An internal error occured", nil)
 	}
 
@@ -72,7 +72,7 @@ func (api *API) CreateGroup(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding CreateGroup request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -88,7 +88,7 @@ func (api *API) CreateGroup(w http.ResponseWriter, res *http.Request) {
 
 	group, err := api.handler.Groups.FindName(jsondata.GroupName)
 	if err != nil && err.Error() != "could not find any groups" {
-		utils.Log.WithError(err).Error("error when retrieving existing group")
+		log.WithError(err).Error("error when retrieving existing group")
 		outputJSON(w, false, "internal error", nil)
 		return
 	}
@@ -106,7 +106,7 @@ func (api *API) CreateGroup(w http.ResponseWriter, res *http.Request) {
 
 		err = api.handler.Groups.Create(group)
 		if err != nil {
-			utils.Log.Error(err.Error())
+			log.WithError(err).Error("error creating a new group")
 			outputJSON(w, false, "An internal error occured", nil)
 			return
 		}
@@ -121,7 +121,7 @@ func (api *API) CreateGroup(w http.ResponseWriter, res *http.Request) {
 
 		err = api.handler.Groups.Save(filter, updates)
 		if err != nil {
-			utils.Log.Error(err.Error())
+			log.WithError(err).Error("error when saving changes for a group")
 			outputJSON(w, false, "An internal error occured", nil)
 			return
 		}
@@ -137,7 +137,7 @@ func (api *API) EditGroup(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding EditGroup request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -146,7 +146,7 @@ func (api *API) EditGroup(w http.ResponseWriter, res *http.Request) {
 
 	group, err := api.handler.Groups.FindFilter(filter)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error when trying to find a group")
 		outputJSON(w, false, "Can't find a command with this ID", nil)
 		return
 	}
@@ -166,7 +166,7 @@ func (api *API) EditGroup(w http.ResponseWriter, res *http.Request) {
 		next, e := convertToInt(jsondata.Value)
 		if e != nil {
 			outputJSON(w, false, "Value is not a number", nil)
-			log.Print(e)
+			log.WithError(e).Error("value is not a number")
 			return
 		}
 		if next > 2147483647 || next < 0 {
@@ -199,7 +199,7 @@ func (api *API) EditGroup(w http.ResponseWriter, res *http.Request) {
 	}
 
 	if err = api.handler.Groups.Save(filter, utils.Updates{"$set": updates}); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error when saving changes to a group")
 		outputJSON(w, false, "An internal error occured when saving the group", nil)
 		return
 	}
@@ -213,14 +213,14 @@ func (api *API) DeleteGroupID(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding DeleteGroupID request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
 
 	err := api.handler.Groups.DeleteWithID(jsondata.ID)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error when deleting a group with id")
 		outputJSON(w, false, "An internal error occured when deleting the command", nil)
 		return
 	}
@@ -241,7 +241,7 @@ func (api *API) DeleteGroupName(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding DeleteGroupName request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -253,7 +253,7 @@ func (api *API) DeleteGroupName(w http.ResponseWriter, res *http.Request) {
 
 	err := api.handler.Groups.DeleteWithName(jsondata.Name)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error when deleting a group with name")
 		outputJSON(w, false, "An internal error occured when deleting the command", nil)
 		return
 	}
@@ -266,14 +266,14 @@ func (api *API) GetGroups(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding GetGroups request")
 		outputJSON(w, false, "An internal error occured when trying to find all groups", nil)
 		return
 	}
 
 	js, _ := json.Marshal(groups)
 	if _, err := w.Write(js); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 
@@ -290,7 +290,7 @@ func (api *API) HasGroup(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding HasGroup request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -302,6 +302,6 @@ func (api *API) HasGroup(w http.ResponseWriter, res *http.Request) {
 
 	js, _ := json.Marshal(api.handler.Groups.HasGroup(jsondata.Name))
 	if _, err := w.Write(js); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }

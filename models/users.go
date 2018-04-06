@@ -35,7 +35,7 @@ func (state *UserManager) Has(filter utils.Filter) bool {
 		return false
 	}
 
-	msg, err := state.conn.Request("users.has", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("users.has", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return false
 	}
@@ -71,7 +71,7 @@ func (state *UserManager) FindUser(username string) (*models.User, error) {
 		return nil, err
 	}
 
-	msg, err := state.conn.Request("users.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("users.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (state *UserManager) FindUserByEmail(email string) (*models.User, error) {
 		return nil, err
 	}
 
-	msg, err := state.conn.Request("users.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("users.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}

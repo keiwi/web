@@ -68,7 +68,7 @@ func (state *ClientsManager) FindAll() ([]models.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	msg, err := state.conn.Request("clients.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("clients.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +92,7 @@ func (state *ClientsManager) FindFilter(filter utils.Filter) (*models.Client, er
 		return nil, err
 	}
 
-	msg, err := state.conn.Request("clients.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("clients.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}

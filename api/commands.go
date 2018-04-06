@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/keiwi/utils"
+	"github.com/keiwi/utils/log"
 	"github.com/keiwi/utils/models"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -24,7 +25,7 @@ func (api *API) CreateCommand(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding CreateCommand request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -52,7 +53,7 @@ func (api *API) CreateCommand(w http.ResponseWriter, res *http.Request) {
 	}
 
 	if err := api.handler.Commands.Create(cmd); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error creating a new command")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -67,14 +68,14 @@ func (api *API) EditCommand(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding EditCommand request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
 
 	cmd, err := api.handler.Commands.Find(jsondata.ID)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error retrieving a command with id")
 		outputJSON(w, false, "Can't find a command with this ID", nil)
 		return
 	}
@@ -105,7 +106,7 @@ func (api *API) EditCommand(w http.ResponseWriter, res *http.Request) {
 	}
 
 	if err = api.handler.Commands.Save(jsondata.ID, utils.Updates{"$set": updates}); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error saving changes for a command")
 		outputJSON(w, false, "An internal error occured when saving the command", nil)
 		return
 	}
@@ -119,14 +120,14 @@ func (api *API) DeleteCommand(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding DeleteCommand request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
 
 	err := api.handler.Commands.DeleteWithID(jsondata.ID)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error deleting a command with id")
 		outputJSON(w, false, "An internal error occured when deleting the command", nil)
 		return
 	}
@@ -139,13 +140,13 @@ func (api *API) GetCommands(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding GetCommands request")
 		outputJSON(w, false, "An internal error occured when trying to find all commands", nil)
 		return
 	}
 
 	js, _ := json.Marshal(cmds)
 	if _, err := w.Write(js); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }

@@ -44,7 +44,7 @@ func (state *GroupsManager) FindAll() ([]models.Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	msg, err := state.conn.Request("groups.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("groups.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (state *GroupsManager) FindFilter(filter utils.Filter) (*models.Group, erro
 		return nil, err
 	}
 
-	msg, err := state.conn.Request("groups.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("groups.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (state *GroupsManager) HasGroup(name string) bool {
 		return false
 	}
 
-	msg, err := state.conn.Request("groups.has", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("groups.has", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return false
 	}

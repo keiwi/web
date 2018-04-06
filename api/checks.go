@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/keiwi/utils"
+	"github.com/keiwi/utils/log"
 	"github.com/keiwi/utils/models"
 )
 
@@ -16,14 +16,14 @@ func (api *API) DeleteCheck(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding DeleteCheck request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
 
 	err := api.handler.Checks.DeleteWithID(jsondata.ID)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error removing check")
 		outputJSON(w, false, "An internal error occured when deleting the check", nil)
 		return
 	}
@@ -37,14 +37,14 @@ func (api *API) GetChecks(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decdoing GetChecks request")
 		outputJSON(w, false, "An internal error occured when trying to find all checks", nil)
 		return
 	}
 
 	js, _ := json.Marshal(checks)
 	if _, err := w.Write(js); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 
@@ -55,7 +55,7 @@ func (api *API) GetCheckWithID(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding GetCheckWithID request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -64,14 +64,14 @@ func (api *API) GetCheckWithID(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error finding check with id")
 		outputJSON(w, false, "An internal error occured when trying to find the check", nil)
 		return
 	}
 
 	js, _ := json.Marshal(check)
 	if _, err := w.Write(js); err != nil {
-		utils.Log.Error(err.Error())
+		log.Error(err.Error())
 	}
 }
 
@@ -87,7 +87,7 @@ func (api *API) GetWithClientIDAndCommandID(w http.ResponseWriter, res *http.Req
 	jsondata := ClientCommandID{}
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding GetWithClientIDAndCommandID request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -96,7 +96,7 @@ func (api *API) GetWithClientIDAndCommandID(w http.ResponseWriter, res *http.Req
 	for _, cmd := range jsondata.CommandID {
 		dataChecks, err := api.handler.Checks.FindWithClientIDAndCommandID(jsondata.ClientID, cmd)
 		if err != nil {
-			utils.Log.Error(err.Error())
+			log.WithError(err).Error("error retrieving check with client and command id")
 			outputJSON(w, false, "An internal error occured when trying to find the checks", nil)
 			return
 		}
@@ -107,7 +107,7 @@ func (api *API) GetWithClientIDAndCommandID(w http.ResponseWriter, res *http.Req
 
 	js, _ := json.Marshal(checks)
 	if _, err := w.Write(js); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 
@@ -126,7 +126,7 @@ func (api *API) GetWithChecksBetweenDateClient(w http.ResponseWriter, res *http.
 	jsondata := ChecksBetweenDateClient{}
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding GetWithChecksBetweenDateClient request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -134,28 +134,28 @@ func (api *API) GetWithChecksBetweenDateClient(w http.ResponseWriter, res *http.
 	// TODO: Check the time layout
 	from, err := time.Parse("2006-01-02 15:04:05", jsondata.From)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error parsing from time")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
 
 	to, err := time.Parse("2006-01-02 15:04:05", jsondata.To)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error parsing to time")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
 
 	checks, err := api.handler.Checks.GetChecksBetweenDateClient(from, to, jsondata.CommandID, jsondata.ClientID, jsondata.Max)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error retrieving checks between dates")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
 
 	js, _ := json.Marshal(checks)
 	if _, err := w.Write(js); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 

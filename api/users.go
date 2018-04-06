@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/keiwi/utils"
+	"github.com/keiwi/utils/log"
 	"github.com/keiwi/utils/models"
 	"github.com/keiwi/web/auth"
 )
@@ -40,14 +40,14 @@ func (api *API) UserSignup(w http.ResponseWriter, res *http.Request) {
 	user, err := api.handler.Users.AddUser(jsondata.Username, jsondata.Email, jsondata.Password)
 	if err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
-		utils.Log.WithField("error", err).Error("error adding user")
+		log.WithError(err).Error("error adding user")
 		return
 	}
 	jsontoken := auth.GetJSONToken(user)
 
 	w.Header().Set("Conent-Type", "application/json")
 	if _, err := w.Write([]byte(jsontoken)); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 
@@ -65,7 +65,7 @@ func (api *API) UserLogin(w http.ResponseWriter, req *http.Request) {
 	user, err := api.handler.Users.FindUser(jsondata.Username)
 	if err != nil {
 		http.Error(w, "Internal error", http.StatusInternalServerError)
-		utils.Log.WithField("error", err).Error("error adding user")
+		log.WithError(err).Error("error adding user")
 		return
 	}
 
@@ -73,7 +73,7 @@ func (api *API) UserLogin(w http.ResponseWriter, req *http.Request) {
 		user, err = api.handler.Users.FindUserByEmail(jsondata.Username)
 		if err != nil {
 			http.Error(w, "Internal error", http.StatusInternalServerError)
-			utils.Log.WithField("error", err).Error("error adding user")
+			log.WithError(err).Error("error adding user")
 			return
 		}
 
@@ -91,7 +91,7 @@ func (api *API) UserLogin(w http.ResponseWriter, req *http.Request) {
 	jsontoken := auth.GetJSONToken(user)
 	w.Header().Set("Conent-Type", "application/json")
 	if _, err := w.Write([]byte(jsontoken)); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 
@@ -109,6 +109,6 @@ func (api *API) UserInfo(w http.ResponseWriter, req *http.Request) {
 	js, _ := json.Marshal(user)
 	w.Header().Set("Content-Type", "application/json")
 	if _, err := w.Write(js); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }

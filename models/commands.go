@@ -46,7 +46,7 @@ func (state *CommandsManager) FindFilter(filter utils.Filter) (*models.Command, 
 		return nil, err
 	}
 
-	msg, err := state.conn.Request("commands.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("commands.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (state *CommandsManager) FindAll() ([]models.Command, error) {
 	if err != nil {
 		return nil, err
 	}
-	msg, err := state.conn.Request("commands.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("commands.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}

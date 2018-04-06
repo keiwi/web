@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/keiwi/utils"
+	"github.com/keiwi/utils/log"
 	"github.com/keiwi/web/api"
 	"github.com/keiwi/web/auth"
 	"github.com/urfave/negroni"
@@ -12,7 +12,7 @@ import (
 
 // NewRoutes builds the routes for the api
 func NewRoutes(api *api.API) *mux.Router {
-	utils.Log.Debug("Initializing API routes")
+	log.Debug("Initializing API routes")
 	mux := mux.NewRouter()
 
 	// Static files

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/keiwi/utils"
+	"github.com/keiwi/utils/log"
 	"github.com/keiwi/utils/models"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -23,7 +24,7 @@ func (api *API) CreateClient(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding CreateClient request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -44,7 +45,7 @@ func (api *API) CreateClient(w http.ResponseWriter, res *http.Request) {
 	}
 
 	if err := api.handler.Clients.Create(client); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error creating a new client")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -59,14 +60,14 @@ func (api *API) DeleteClient(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding DeleteClient request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
 
 	err := api.handler.Clients.DeleteWithID(jsondata.ID)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error deleting a client with ID")
 		outputJSON(w, false, "An internal error occured when deleting the client", nil)
 		return
 	}
@@ -80,14 +81,14 @@ func (api *API) GetClients(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding GetClients request")
 		outputJSON(w, false, "An internal error occured when trying to find all clients", nil)
 		return
 	}
 
 	js, _ := json.Marshal(clients)
 	if _, err := w.Write(js); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 
@@ -98,7 +99,7 @@ func (api *API) GetClientWithID(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding GetClientWithID request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
@@ -107,14 +108,14 @@ func (api *API) GetClientWithID(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error finding client with id")
 		outputJSON(w, false, "An internal error occured when trying to find the client", nil)
 		return
 	}
 
 	js, _ := json.Marshal(client)
 	if _, err := w.Write(js); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 
@@ -125,14 +126,14 @@ func (api *API) EditClient(w http.ResponseWriter, res *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := decoder.Decode(&jsondata); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error decoding EditClient request")
 		outputJSON(w, false, "An internal error occured", nil)
 		return
 	}
 
 	client, err := api.handler.Clients.Find(jsondata.ID)
 	if err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error finding client with ID")
 		outputJSON(w, false, "Can't find a client with this ID", nil)
 		return
 	}
@@ -171,7 +172,7 @@ func (api *API) EditClient(w http.ResponseWriter, res *http.Request) {
 			}
 			group, err := api.handler.Groups.Find(a)
 			if err != nil || group == nil {
-				utils.Log.Error(err.Error())
+				log.WithError(err).Error("error finding a group")
 				outputJSON(w, false, "Can't find a group with the id "+a, nil)
 				return
 			}
@@ -184,7 +185,7 @@ func (api *API) EditClient(w http.ResponseWriter, res *http.Request) {
 	}
 
 	if err = api.handler.Clients.Save(jsondata.ID, utils.Updates{"$set": updates}); err != nil {
-		utils.Log.Error(err.Error())
+		log.WithError(err).Error("error when saving updates for a client")
 		outputJSON(w, false, "An internal error occured when saving the client", nil)
 		return
 	}

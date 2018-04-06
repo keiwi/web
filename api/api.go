@@ -6,7 +6,7 @@ import (
 	"io"
 	"strconv"
 
-	"github.com/keiwi/utils"
+	"github.com/keiwi/utils/log"
 	"github.com/keiwi/web/models"
 )
 
@@ -46,7 +46,7 @@ type IDOptions struct {
 func outputJSON(w io.Writer, success bool, message string, data interface{}) {
 	out, _ := json.Marshal(MessageJSON{Success: success, Message: message, Data: data})
 	if _, err := w.Write(out); err != nil {
-		utils.Log.Fatal(err.Error())
+		log.Fatal(err.Error())
 	}
 }
 

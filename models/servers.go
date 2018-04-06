@@ -44,7 +44,7 @@ func (state *ServersManager) FindAll() ([]models.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	msg, err := state.conn.Request("servers.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("servers.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func (state *ServersManager) Find(id uint) (*models.Server, error) {
 		return nil, err
 	}
 
-	msg, err := state.conn.Request("servers.retrieve.find", data, time.Duration(viper.GetInt("nats_delay"))*time.Second)
+	msg, err := state.conn.Request("servers.retrieve.find", data, time.Duration(viper.GetInt("nats.delay"))*time.Second)
 	if err != nil {
 		return nil, err
 	}

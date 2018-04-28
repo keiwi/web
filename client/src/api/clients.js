@@ -6,8 +6,11 @@ export default {
     createClient (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.CREATE_CLIENTS_URL, payload).then(response => {
-                if (response.body.success) resolve(response.body)
-                else reject(response.body.message)
+                if (response.body.success) {
+                    resolve(response.body)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -17,7 +20,11 @@ export default {
     getAllClients () {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.GET_ALL_CLIENTS_URL).then(response => {
-                resolve(response.body)
+                if (response.body.success) {
+                    resolve(response.body.data)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -27,8 +34,11 @@ export default {
     getIDClients (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.GET_ID_CLIENTS_URL, payload).then(response => {
-                if (response.body.success === false) reject(response.body.message)
-                else resolve(response.body)
+                if (response.body.success) {
+                    resolve(response.body.data)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -38,8 +48,11 @@ export default {
     editClient (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.EDIT_CLIENTS_URL, payload).then(response => {
-                if (response.body.success) resolve(response.body)
-                else reject(response.body.message)
+                if (response.body.success) {
+                    resolve(response.body)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -49,8 +62,11 @@ export default {
     deleteClient (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.DELETE_CLIENTS_URL, payload).then(response => {
-                if (response.body.success) resolve(response.body)
-                else reject(response.body.message)
+                if (response.body.success) {
+                    resolve(response.body)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })

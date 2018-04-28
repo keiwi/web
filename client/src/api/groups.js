@@ -6,8 +6,11 @@ export default {
     groupExists (name) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.EXISTS_GROUP_URL, {name}).then(response => {
-                if (!response.body.success === false) reject(response.body.message)
-                resolve(response.body)
+                if (response.body.success) {
+                    resolve(response.body.data)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -17,8 +20,11 @@ export default {
     addGroupCommand (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.CREATE_GROUPS_URL, payload).then(response => {
-                if (response.body.success) resolve(response.body)
-                else reject(response.body.message)
+                if (response.body.success) {
+                    resolve(response.body)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -28,9 +34,11 @@ export default {
     getGroups () {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.GET_GROUPS_URL).then(response => {
-                if (response.body == null) resolve([])
-                else if (!response.body.success === false) reject(response.body.message)
-                else resolve(response.body)
+                if (response.body.success) {
+                    resolve(response.body.data)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -40,8 +48,11 @@ export default {
     editGroup (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.EDIT_GROUPS_URL, payload).then(response => {
-                if (response.body.success) resolve(response.body)
-                else reject(response.body.message)
+                if (response.body.success) {
+                    resolve(response.body)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -51,8 +62,11 @@ export default {
     deleteGroupCommand (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.DELETE_ID_GROUPS_URL, payload).then(response => {
-                if (response.body.success) resolve(response.body)
-                else reject(response.body.message)
+                if (response.body.success) {
+                    resolve(response.body)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -62,8 +76,11 @@ export default {
     deleteGroup (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.DELETE_NAME_GROUPS_URL, payload).then(response => {
-                if (response.body.success) resolve(response.body)
-                else reject(response.body.message)
+                if (response.body.success) {
+                    resolve(response.body)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })

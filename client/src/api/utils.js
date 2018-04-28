@@ -1,5 +1,5 @@
 // Main URL
-const API_URL = '/api/v1'
+const API_URL = '/api'
 
 // Commands URL
 const COMMANDS_URL = API_URL + '/commands'

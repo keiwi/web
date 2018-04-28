@@ -11,8 +11,7 @@
     export default {
         props: ['values', 'format', 'chartData'],
         mounted () {
-            console.log(this.chartData)
-            this.graph = Plotly.plot(this.$el, this.chartData.dataSets, this.chartData.layout)
+            this.graph = Plotly.newPlot(this.$el, this.chartData.dataSets || [], this.chartData.layout, {})
             /* this.graphs = new SimpleGraph(this.$el, {
                 onDataHover (value, index) {
                     return `
@@ -32,7 +31,6 @@
         watch: {
             chartData: {
                 handler (newValue) {
-                    console.log(newValue)
                     this.graph = Plotly.react(this.$el, newValue.dataSets, newValue.layout)
                 },
                 nested: true

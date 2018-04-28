@@ -135,8 +135,8 @@
                 API.getChecksDateClient({
                     client_id: this.$route.params.id,
                     command_id: this.graphs[i].command_id,
-                    from: moment().subtract(7, 'days').format('YYYY-MM-DD hh:mm:ss'),
-                    to: moment().format('YYYY-MM-DD hh:mm:ss'),
+                    from: moment().subtract(7, 'days').format('YYYY-MM-DD HH:mm:ss'),
+                    to: moment().format('YYYY-MM-DD HH:mm:ss'),
                     max: 50
                 }).then((resp) => {
                     var dataSets = []
@@ -149,13 +149,12 @@
                                         dataSets[k] = newDataset(this.graphs[i])
                                     }
 
-                                    if (resp[j].error) {
+                                    if (resp[j].error || resp[j].response === '') {
                                         dataSets[k].x.push(d)
                                         dataSets[k].y.push(0)
                                         continue
                                     }
                                     dataSets[k].x.push(d)
-                                    console.log(resp[j].response)
                                     dataSets[k].y.push(JSON.parse(resp[j].response).message[this.graphs[i].Key[k]])
                                     dataSets[k].text.push(formatCheck(resp[j]))
                                 }
@@ -163,13 +162,12 @@
                                 if (dataSets.length <= 0) {
                                     dataSets[0] = newDataset(this.graphs[i])
                                 }
-                                if (resp[j].error) {
+                                if (resp[j].error || resp[j].response === '') {
                                     dataSets[0].x.push(d)
                                     dataSets[0].y.push(0)
                                     continue
                                 }
                                 dataSets[0].x.push(d)
-                                console.log(resp[j].response)
                                 dataSets[0].y.push(JSON.parse(resp[j].response).message[this.graphs[i].Key])
                                 dataSets[0].text.push(formatCheck(resp[j]))
                             }

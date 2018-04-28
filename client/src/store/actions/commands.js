@@ -30,10 +30,6 @@ export default {
         return new Promise((resolve, reject) => {
             api.getCommand()
                 .then((response) => {
-                    if (response == null) {
-                        resolve()
-                        return
-                    }
                     for (let c of response) {
                         commit('createCommand', {
                             id: c.id,

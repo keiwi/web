@@ -6,8 +6,11 @@ export default {
     createCommand (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.CREATE_COMMANDS_URL, payload).then(response => {
-                if (response.body.success) resolve(response.body)
-                else reject(response.body)
+                if (response.body.success) {
+                    resolve(response.body)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -17,8 +20,11 @@ export default {
     getCommand () {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.GET_COMMANDS_URL).then(response => {
-                if (response.body == null) resolve([])
-                else resolve(response.body)
+                if (response.body.success) {
+                    resolve(response.body.data)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -28,8 +34,11 @@ export default {
     editCommand (payload) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.EDIT_COMMANDS_URL, payload).then(response => {
-                if (response.body.success) resolve(response.body)
-                else reject(response.body.message)
+                if (response.body.success) {
+                    resolve(response.body)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })
@@ -39,8 +48,11 @@ export default {
     deleteCommand (id) {
         return new Promise((resolve, reject) => {
             Vue.http.post(utils.DELETE_COMMANDS_URL, {id}).then(response => {
-                if (response.body.success) resolve(response.body)
-                else reject(response.body.message)
+                if (response.body.success) {
+                    resolve(response.body)
+                } else {
+                    reject(response.body.message)
+                }
             }, response => {
                 reject(response.statusText)
             })

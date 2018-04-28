@@ -284,8 +284,7 @@ export default {
             this.createCommand(this.commandForm)
                 .then((response) => {
                     let message = {message: response.message, timeout: 5000}
-                    if (response.success) VueNotifications.info(message)
-                    else VueNotifications.error(message)
+                    VueNotifications.info(message)
                 }, (response) => {
                     VueNotifications.error({message: response.message, timeout: 5000})
                 })
